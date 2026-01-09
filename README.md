@@ -31,7 +31,7 @@ ccbell (this repo)              cc-plugins (marketplace)
 
 ### Prerequisites
 
-- Go 1.25+
+- Go 1.25.5+
 - Make (optional)
 
 ### Build

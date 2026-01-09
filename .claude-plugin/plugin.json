@@ -6,11 +6,7 @@
     "name": "Mutlu Polatcan",
     "email": "mpolatcan@gmail.com"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/mpolatcan/ccbell.git"
-  },
+  "repository": "https://github.com/mpolatcan/ccbell",
   "keywords": ["sound", "notification", "bell", "audio", "alert", "productivity"],
-  "license": "MIT",
-  "category": "productivity"
+  "license": "MIT"
 }

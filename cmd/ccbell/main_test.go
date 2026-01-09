@@ -165,7 +165,7 @@ func TestRunWithValidEventTypeDisabled(t *testing.T) {
 	// Create config with plugin disabled
 	configContent := testConfigDisabledPlugin
 	configPath := filepath.Join(claudeDir, "ccbell.config.json")
-	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
+	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -226,7 +226,7 @@ func TestRunWithEventDisabled(t *testing.T) {
 		}
 	}`
 	configPath := filepath.Join(claudeDir, "ccbell.config.json")
-	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
+	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -280,7 +280,7 @@ func TestRunDefaultEventType(t *testing.T) {
 	// Create config with plugin disabled (to exit early without playing sound)
 	configContent := testConfigDisabledPlugin
 	configPath := filepath.Join(claudeDir, "ccbell.config.json")
-	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
+	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -340,7 +340,7 @@ func TestRunWithQuietHours(t *testing.T) {
 		}
 	}`
 	configPath := filepath.Join(claudeDir, "ccbell.config.json")
-	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
+	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -394,7 +394,7 @@ func TestValidEventTypes(t *testing.T) {
 	// Create config with plugin disabled (to exit early)
 	configContent := testConfigDisabledPlugin
 	configPath := filepath.Join(claudeDir, "ccbell.config.json")
-	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
+	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -462,7 +462,7 @@ func TestRunWithCooldown(t *testing.T) {
 		}
 	}`
 	configPath := filepath.Join(claudeDir, "ccbell.config.json")
-	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
+	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -519,7 +519,7 @@ func TestRunWithDebugMode(t *testing.T) {
 		"debug": true
 	}`
 	configPath := filepath.Join(claudeDir, "ccbell.config.json")
-	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
+	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -576,7 +576,7 @@ func TestRunWithInvalidConfig(t *testing.T) {
 	// Create invalid JSON config
 	configContent := `{invalid json`
 	configPath := filepath.Join(claudeDir, "ccbell.config.json")
-	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
+	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -646,7 +646,7 @@ func TestRunWithProjectConfig(t *testing.T) {
 	// Create project config (takes precedence)
 	configContent := testConfigDisabledPlugin
 	configPath := filepath.Join(projectClaudeDir, "ccbell.config.json")
-	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
+	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -709,7 +709,7 @@ func TestRunWithActiveProfile(t *testing.T) {
 		}
 	}`
 	configPath := filepath.Join(claudeDir, "ccbell.config.json")
-	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
+	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -772,7 +772,7 @@ func TestRunWithUserProfile(t *testing.T) {
 	// Create config with plugin disabled
 	configContent := testConfigDisabledPlugin
 	configPath := filepath.Join(claudeDir, "ccbell.config.json")
-	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
+	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
 		t.Fatal(err)
 	}
 

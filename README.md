@@ -1,256 +1,161 @@
 # ccbell
 
-Audio notifications for Claude Code events. Get notified when Claude finishes responding, needs permission, or is waiting for your input.
+Go source code for the ccbell Claude Code plugin - audio notifications for Claude Code events.
 
-## Features
+> **Looking to install the plugin?** See [cc-plugins/plugins/ccbell](https://github.com/mpolatcan/cc-plugins)
 
-- Play sounds on multiple Claude Code events
-- Support for system sounds, custom audio files, and bundled defaults
-- Cross-platform support (macOS, Linux, Windows)
-- Easy configuration via slash commands
-- Per-event volume control
+## Overview
 
-## Installation
+This repository contains the Go source code for the `ccbell` binary. The distributable plugin (with sounds, hooks, and commands) is maintained in the [cc-plugins](https://github.com/mpolatcan/cc-plugins) marketplace repository.
 
-### Option 1: Via Marketplace (Recommended)
+## Architecture
 
-The easiest way to install ccbell is through the Claude Code plugin marketplace:
-
-**Step 1: Add the marketplace**
 ```
-/plugin marketplace add mpolatcan/cc-plugins
-```
-
-**Step 2: Install the plugin**
-```
-/plugin install ccbell
+ccbell (this repo)              cc-plugins (marketplace)
+├── cmd/ccbell/main.go          ├── plugins/ccbell/
+├── internal/                   │   ├── .claude-plugin/
+│   ├── audio/     # Playback   │   │   ├── plugin.json
+│   ├── config/    # Config     │   │   └── marketplace.json
+│   ├── logger/    # Logging    │   ├── hooks/hooks.json
+│   └── state/     # Cooldown   │   ├── sounds/*.aiff
+├── go.mod                      │   ├── commands/*.md
+└── Makefile                    └── scripts/install.sh
 ```
 
-That's it! The plugin is now installed and ready to use.
+**Flow:**
+1. User installs plugin from cc-plugins marketplace
+2. `postinstall` script downloads binary from this repo's GitHub Releases
+3. Claude Code hooks call the binary for sound notifications
 
-### Option 2: Manual Installation
+## Development
 
-For local development or if you prefer manual installation:
+### Prerequisites
 
-**Step 1: Clone to Local Plugins**
+- Go 1.22+
+- Make (optional)
+
+### Build
 
 ```bash
-git clone https://github.com/mpolatcan/ccbell.git ~/.claude/plugins/local/ccbell
+# Build for current platform
+make build
+
+# Or without make
+go build -o bin/ccbell ./cmd/ccbell
 ```
 
-**Step 2: Make Scripts Executable**
+### Test
 
 ```bash
-chmod +x ~/.claude/plugins/local/ccbell/hooks/play-sound.sh
+make test
+
+# With coverage
+make coverage
 ```
 
-**Step 3: Enable the Plugin**
+### Lint
 
-Add to `~/.claude/settings.json`:
-
-```json
-{
-  "enabledPlugins": {
-    "ccbell@local": true
-  }
-}
-```
-
-**Step 4: Restart Claude Code**
-
-Restart Claude Code to load the plugin.
-
-## Quick Start
-
-1. Enable the plugin:
-   ```
-   /ccbell:enable
-   ```
-
-2. Test sounds:
-   ```
-   /ccbell:test
-   ```
-
-3. Customize (optional):
-   ```
-   /ccbell:configure
-   ```
-
-## Commands
-
-| Command | Description |
-|---------|-------------|
-| `/ccbell:configure` | Interactive setup for sounds and events |
-| `/ccbell:test [event]` | Test sounds (all or specific event) |
-| `/ccbell:enable` | Enable all notifications |
-| `/ccbell:disable` | Disable all notifications |
-| `/ccbell:status` | Show current configuration |
-| `/ccbell:help` | Show help documentation |
-
-## Supported Events
-
-| Event | When it triggers |
-|-------|-----------------|
-| `stop` | Claude finishes responding |
-| `permission_prompt` | Claude needs your permission to proceed |
-| `idle_prompt` | Claude is waiting for your input |
-
-## Sound Options
-
-### System Sounds (macOS)
-
-Available sounds: Basso, Blow, Bottle, Frog, Funk, Glass, Hero, Morse, Ping, Pop, Purr, Sosumi, Submarine, Tink
-
-Format: `system:Glass`
-
-### Custom Sounds
-
-Use your own audio files (MP3, WAV, AIFF, M4A).
-
-Format: `custom:/path/to/your/sound.mp3`
-
-### Bundled Defaults
-
-Pre-packaged sounds included with the plugin.
-
-Format: `bundled:stop`, `bundled:permission_prompt`, `bundled:idle_prompt`
-
-## Configuration
-
-Configuration is stored in JSON format at:
-- **Project-level:** `.claude/ccbell.config.json`
-- **Global:** `~/.claude/ccbell.config.json`
-
-Project config takes precedence over global config.
-
-### Example Configuration
-
-```json
-{
-  "enabled": true,
-  "events": {
-    "stop": {
-      "enabled": true,
-      "sound": "system:Glass",
-      "volume": 0.5
-    },
-    "permission_prompt": {
-      "enabled": true,
-      "sound": "system:Ping",
-      "volume": 0.7
-    },
-    "idle_prompt": {
-      "enabled": false,
-      "sound": "system:Submarine",
-      "volume": 0.5
-    }
-  }
-}
-```
-
-## Cross-Platform Support
-
-| Platform | Audio Backend | Status |
-|----------|--------------|--------|
-| macOS | `afplay` | Full support |
-| Linux | `paplay`, `aplay`, `mpv`, `ffplay` | Requires one installed |
-| Windows | PowerShell `Media.SoundPlayer` | Basic support |
-
-## Troubleshooting
-
-### Commands not found?
-
-**If installed via marketplace:**
-1. Verify the marketplace is added: `/plugin marketplace list`
-2. Check if the plugin is installed: `/plugins`
-3. Try reinstalling: `/plugin install ccbell`
-
-**If installed manually:**
-1. Verify the plugin is installed at `~/.claude/plugins/local/ccbell`
-2. Check that the plugin is enabled in your settings:
-   ```bash
-   cat ~/.claude/settings.json | grep ccbell
-   ```
-3. Ensure the settings contain `"ccbell@local": true`
-4. Restart Claude Code after enabling
-
-### Sounds not playing?
-
-1. Check your system volume isn't muted
-2. Verify the plugin is enabled: `/ccbell:status`
-3. Test audio manually:
-   ```bash
-   afplay /System/Library/Sounds/Glass.aiff
-   ```
-
-### Wrong sounds playing?
-
-Run `/ccbell:configure` to update your sound preferences.
-
-### Permission errors?
-
-Make sure the script is executable:
 ```bash
-chmod +x ~/.claude/plugins/local/ccbell/hooks/play-sound.sh
+make lint
 ```
 
-## Repository Structure
+### Run Locally
+
+```bash
+# Test the binary
+./bin/ccbell --version
+./bin/ccbell --help
+./bin/ccbell stop  # Play stop sound
+```
+
+## Project Structure
 
 ```
 ccbell/
-├── .claude-plugin/
-│   └── plugin.json          # Plugin manifest
-├── commands/
-│   ├── configure.md         # /ccbell:configure
-│   ├── disable.md           # /ccbell:disable
-│   ├── enable.md            # /ccbell:enable
-│   ├── help.md              # /ccbell:help
-│   ├── status.md            # /ccbell:status
-│   └── test.md              # /ccbell:test
-├── hooks/
-│   ├── hooks.json           # Hook event configuration
-│   └── play-sound.sh        # Cross-platform sound player
-├── sounds/
-│   ├── idle_prompt.aiff     # Default idle sound
-│   ├── permission_prompt.aiff # Default permission sound
-│   └── stop.aiff            # Default stop sound
+├── cmd/
+│   └── ccbell/
+│       └── main.go          # Entry point
+├── internal/
+│   ├── audio/
+│   │   ├── player.go        # Cross-platform audio playback
+│   │   └── player_test.go
+│   ├── config/
+│   │   ├── config.go        # Configuration loading
+│   │   ├── config_test.go
+│   │   ├── quiethours.go    # Quiet hours logic
+│   │   └── quiethours_test.go
+│   ├── logger/
+│   │   └── logger.go        # Debug logging
+│   └── state/
+│       └── state.go         # Cooldown state management
+├── .github/
+│   └── workflows/
+│       ├── ci.yml           # Test, lint, build
+│       └── release.yml      # Create releases on tag
+├── Makefile
+├── go.mod
 └── README.md
 ```
 
-## Uninstallation
+## Cross-Compilation
 
-### If installed via marketplace:
-
-```
-/plugin uninstall ccbell
-```
-
-Optionally remove the marketplace:
-```
-/plugin marketplace remove mpolatcan/cc-plugins
-```
-
-### If installed manually:
-
-**Step 1: Disable the Plugin**
-
-Remove `"ccbell@local": true` from your settings file:
-- Global: `~/.claude/settings.json`
-- Or per-project: `.claude/settings.local.json`
-
-**Step 2: Remove Plugin Files**
+Build for all supported platforms:
 
 ```bash
-rm -rf ~/.claude/plugins/local/ccbell
+make dist
 ```
 
-### Remove Configuration (Optional)
+Creates binaries in `dist/`:
+- `ccbell-darwin-amd64` (macOS Intel)
+- `ccbell-darwin-arm64` (macOS Apple Silicon)
+- `ccbell-linux-amd64`
+- `ccbell-linux-arm64`
+- `ccbell-windows-amd64.exe`
+
+## Creating a Release
+
+Releases are automated via GitHub Actions when you push a tag:
 
 ```bash
-rm ~/.claude/ccbell.config.json
-rm .claude/ccbell.config.json  # If project-level config exists
+# Tag a new version
+git tag v1.0.0
+git push origin v1.0.0
 ```
+
+This triggers `.github/workflows/release.yml` which:
+1. Runs tests
+2. Builds binaries for all platforms
+3. Creates archives (tar.gz/zip)
+4. Generates checksums
+5. Creates GitHub Release with all artifacts
+
+## Configuration
+
+The binary reads configuration from:
+- **Project:** `.claude/ccbell.config.json`
+- **Global:** `~/.claude/ccbell.config.json`
+
+See the [plugin README](https://github.com/mpolatcan/cc-plugins/tree/main/plugins/ccbell) for configuration options.
+
+## Platform Support
+
+| Platform | Audio Backend |
+|----------|--------------|
+| macOS | `afplay` (built-in) |
+| Linux | `paplay`, `aplay`, `mpv`, or `ffplay` |
+| Windows | PowerShell `Media.SoundPlayer` |
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make changes
+4. Run `make check` (fmt, lint, test, build)
+5. Submit a pull request
+
+## Related Repositories
+
+- [cc-plugins](https://github.com/mpolatcan/cc-plugins) - Plugin marketplace containing the distributable ccbell plugin
 
 ## License
 

@@ -18,7 +18,7 @@ The easiest way to install ccbell is through the Claude Code plugin marketplace:
 
 **Step 1: Add the marketplace**
 ```
-/plugin marketplace add mpolatcan/claude-plugins
+/plugin marketplace add mpolatcan/cc-plugins
 ```
 
 **Step 2: Install the plugin**
@@ -228,7 +228,7 @@ ccbell/
 
 Optionally remove the marketplace:
 ```
-/plugin marketplace remove mpolatcan/claude-plugins
+/plugin marketplace remove mpolatcan/cc-plugins
 ```
 
 ### If installed manually:

@@ -20,6 +20,9 @@ type Config struct {
 	Profiles      map[string]*Profile `json:"profiles,omitempty"`
 }
 
+// defaultProfileName is the name of the default profile.
+const defaultProfileName = "default"
+
 // QuietHours represents do-not-disturb time window.
 type QuietHours struct {
 	Start string `json:"start"` // HH:MM format
@@ -75,7 +78,8 @@ func Default() *Config {
 
 // Load reads configuration from file, falling back to defaults.
 // It checks project-level config first, then global config.
-func Load(projectDir, homeDir, pluginRoot string) (*Config, string, error) {
+// Note: pluginRoot is reserved for future use (e.g., loading bundled sounds).
+func Load(projectDir, homeDir, _ string) (*Config, string, error) {
 	cfg := Default()
 	configPath := ""
 
@@ -122,7 +126,7 @@ func (c *Config) Validate() error {
 	}
 
 	// Validate activeProfile exists in Profiles (if not default)
-	if c.ActiveProfile != "" && c.ActiveProfile != "default" {
+	if c.ActiveProfile != "" && c.ActiveProfile != defaultProfileName {
 		if _, ok := c.Profiles[c.ActiveProfile]; !ok {
 			return fmt.Errorf("activeProfile %q not found in profiles", c.ActiveProfile)
 		}

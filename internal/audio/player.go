@@ -15,11 +15,12 @@ import (
 // Platform represents the detected operating system.
 type Platform string
 
+// Platform constants represent the supported operating systems.
 const (
-	PlatformMacOS   Platform = "macos"
-	PlatformLinux   Platform = "linux"
-	PlatformWindows Platform = "windows"
-	PlatformWSL     Platform = "wsl"
+	PlatformMacOS   Platform = "macos"   // Apple macOS
+	PlatformLinux   Platform = "linux"   // Linux
+	PlatformWindows Platform = "windows" // Microsoft Windows
+	PlatformWSL     Platform = "wsl"     // Windows Subsystem for Linux
 	PlatformUnknown Platform = "unknown"
 )
 
@@ -79,8 +80,10 @@ func (p *Player) Play(soundPath string, volume float64) error {
 		return p.playLinux(soundPath, volume)
 	case PlatformWindows:
 		return p.playWindows(soundPath)
-	default:
+	case PlatformUnknown:
 		return fmt.Errorf("unsupported platform: %s", p.platform)
+	default:
+		return fmt.Errorf("unknown platform: %s", p.platform)
 	}
 }
 
@@ -241,6 +244,8 @@ func (p *Player) HasAudioPlayer() bool {
 	case PlatformWindows:
 		_, err := exec.LookPath("powershell")
 		return err == nil
+	case PlatformUnknown:
+		return false
 	default:
 		return false
 	}

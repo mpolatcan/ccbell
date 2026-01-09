@@ -46,12 +46,12 @@ func parseTimeToMinutes(timeStr string) (int, error) {
 
 	hours, err := strconv.Atoi(parts[0])
 	if err != nil {
-		return 0, fmt.Errorf("invalid hours in time %q: %v", timeStr, err)
+		return 0, fmt.Errorf("invalid hours in time %q: %w", timeStr, err)
 	}
 
 	minutes, err := strconv.Atoi(parts[1])
 	if err != nil {
-		return 0, fmt.Errorf("invalid minutes in time %q: %v", timeStr, err)
+		return 0, fmt.Errorf("invalid minutes in time %q: %w", timeStr, err)
 	}
 
 	if hours < 0 || hours > 23 || minutes < 0 || minutes > 59 {

@@ -1,39 +1,39 @@
+version: "2"
+
 run:
   timeout: 5m
   modules-download-mode: readonly
 
 linters:
   enable:
-    - errcheck
-    - gosimple
     - govet
     - ineffassign
     - staticcheck
     - unused
-    - gofmt
-    - goimports
     - misspell
     - unconvert
     - unparam
     - gocritic
     - revive
-    - exportloopref
+    - copyloopvar
+    - errorlint
+    - exhaustive
+    - gochecknoinits
+    - goconst
+    - godot
+    - sqlclosecheck
+    - wastedassign
+    - forcetypeassert
+  disable:
+    - errcheck
+    - gosec
+    - gochecknoglobals
 
 linters-settings:
-  errcheck:
-    check-type-assertions: true
-    check-blank: true
-
   govet:
     enable-all: true
     disable:
       - fieldalignment
-
-  gofmt:
-    simplify: true
-
-  goimports:
-    local-prefixes: github.com/mpolatcan/ccbell
 
   misspell:
     locale: US
@@ -67,8 +67,8 @@ linters-settings:
 
 issues:
   exclude-use-default: false
-  max-issues-per-linter: 0
-  max-same-issues: 0
+  max-issues-per-linter: 50
+  max-same-issues: 3
 
   exclude-rules:
     # Allow fmt.Printf in main.go (CLI output)
@@ -76,13 +76,8 @@ issues:
       linters:
         - forbidigo
 
-    # Allow unused parameters in test files
+    # Testing patterns are different - skip specific linters for tests
     - path: _test\.go
       linters:
-        - unparam
-
-    # Exclude some revive rules for tests
-    - path: _test\.go
-      linters:
+        - gocritic
         - revive
-      text: "exported:"

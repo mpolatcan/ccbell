@@ -91,7 +91,7 @@ func TestLogger_Debug(t *testing.T) {
 		}
 	})
 
-	t.Run("does not log with empty path", func(t *testing.T) {
+	t.Run("does not log with empty path", func(_ *testing.T) {
 		l := New(true, "")
 		l.Debug("should not crash")
 		// Should not panic

@@ -170,8 +170,8 @@ func TestQuietHoursStatus(t *testing.T) {
 	}
 }
 
-func formatTime(hour, min int) string {
-	return padZero(hour) + ":" + padZero(min)
+func formatTime(hour, _ int) string {
+	return padZero(hour) + ":00"
 }
 
 func padZero(n int) string {

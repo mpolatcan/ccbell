@@ -187,9 +187,6 @@ func TestNewPlayer(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			player := NewPlayer(tt.pluginRoot)
-			if player == nil {
-				t.Error("NewPlayer returned nil")
-			}
 			if player.pluginRoot != tt.pluginRoot {
 				t.Errorf("pluginRoot = %q, want %q", player.pluginRoot, tt.pluginRoot)
 			}

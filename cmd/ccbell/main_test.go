@@ -8,6 +8,9 @@ import (
 	"testing"
 )
 
+// testConfigDisabledPlugin is the JSON config content used in tests.
+const testConfigDisabledPlugin = `{"enabled": false}`
+
 func TestPrintUsage(t *testing.T) {
 	// Capture stdout
 	old := os.Stdout
@@ -160,7 +163,7 @@ func TestRunWithValidEventTypeDisabled(t *testing.T) {
 	}
 
 	// Create config with plugin disabled
-	configContent := `{"enabled": false}`
+	configContent := testConfigDisabledPlugin
 	configPath := filepath.Join(claudeDir, "ccbell.config.json")
 	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
 		t.Fatal(err)
@@ -275,7 +278,7 @@ func TestRunDefaultEventType(t *testing.T) {
 	}
 
 	// Create config with plugin disabled (to exit early without playing sound)
-	configContent := `{"enabled": false}`
+	configContent := testConfigDisabledPlugin
 	configPath := filepath.Join(claudeDir, "ccbell.config.json")
 	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
 		t.Fatal(err)
@@ -389,7 +392,7 @@ func TestValidEventTypes(t *testing.T) {
 	}
 
 	// Create config with plugin disabled (to exit early)
-	configContent := `{"enabled": false}`
+	configContent := testConfigDisabledPlugin
 	configPath := filepath.Join(claudeDir, "ccbell.config.json")
 	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
 		t.Fatal(err)
@@ -641,7 +644,7 @@ func TestRunWithProjectConfig(t *testing.T) {
 	}
 
 	// Create project config (takes precedence)
-	configContent := `{"enabled": false}`
+	configContent := testConfigDisabledPlugin
 	configPath := filepath.Join(projectClaudeDir, "ccbell.config.json")
 	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
 		t.Fatal(err)
@@ -767,7 +770,7 @@ func TestRunWithUserProfile(t *testing.T) {
 	}
 
 	// Create config with plugin disabled
-	configContent := `{"enabled": false}`
+	configContent := testConfigDisabledPlugin
 	configPath := filepath.Join(claudeDir, "ccbell.config.json")
 	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
 		t.Fatal(err)

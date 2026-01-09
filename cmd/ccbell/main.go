@@ -15,7 +15,7 @@ import (
 	"github.com/mpolatcan/ccbell/internal/state"
 )
 
-// Build-time variables (set via -ldflags)
+// Build-time variables (set via -ldflags).
 var (
 	version   = "dev"
 	commit    = "unknown"
@@ -33,6 +33,7 @@ func main() {
 
 	if err := run(); err != nil {
 		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
+		//nolint:gocritic
 		os.Exit(1)
 	}
 }
@@ -64,7 +65,7 @@ func run() error {
 	// goroutine since this is a short-lived process - the goroutine will be
 	// terminated when the process exits (cmd.Start() for non-Windows).
 	go func() {
-		io.Copy(io.Discard, os.Stdin)
+		_, _ = io.Copy(io.Discard, os.Stdin)
 	}()
 
 	// === Environment setup ===

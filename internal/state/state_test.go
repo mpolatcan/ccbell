@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 )
@@ -272,12 +273,14 @@ func TestManager_AtomicSave(t *testing.T) {
 		t.Error("stop event should have timestamp")
 	}
 
-	// Verify file permissions
-	info, err := os.Stat(m.filePath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if info.Mode().Perm() != FileMode {
-		t.Errorf("file mode = %v, want %v", info.Mode().Perm(), FileMode)
+	// Verify file permissions (skip on Windows - different permission model)
+	if runtime.GOOS != "windows" {
+		info, err := os.Stat(m.filePath)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if info.Mode().Perm() != FileMode {
+			t.Errorf("file mode = %v, want %v", info.Mode().Perm(), FileMode)
+		}
 	}
 }

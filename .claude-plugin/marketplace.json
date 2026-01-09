@@ -5,7 +5,7 @@
   "description": "Audio notifications for Claude Code events - play sounds when Claude finishes responding, needs permission, or is waiting for input",
   "owner": {
     "name": "Mutlu Polatcan",
-    "email": "mpolatcan@gmail.com"
+    "email": "mutlupolatcan@gmail.com"
   },
   "plugins": [
     {
@@ -14,7 +14,7 @@
       "version": "1.0.0",
       "author": {
         "name": "Mutlu Polatcan",
-        "email": "mpolatcan@gmail.com"
+        "email": "mutlupolatcan@gmail.com"
       },
       "source": ".",
       "category": "productivity"

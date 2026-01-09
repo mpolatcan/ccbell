@@ -18,7 +18,7 @@ The easiest way to install ccbell is through the Claude Code plugin marketplace:
 
 **Step 1: Add the marketplace**
 ```
-/plugin marketplace add mpolatcan/ccbell
+/plugin marketplace add mpolatcan/claude-plugins
 ```
 
 **Step 2: Install the plugin**
@@ -200,7 +200,6 @@ chmod +x ~/.claude/plugins/local/ccbell/hooks/play-sound.sh
 ```
 ccbell/
 ├── .claude-plugin/
-│   ├── marketplace.json     # Marketplace definition for distribution
 │   └── plugin.json          # Plugin manifest
 ├── commands/
 │   ├── configure.md         # /ccbell:configure
@@ -229,7 +228,7 @@ ccbell/
 
 Optionally remove the marketplace:
 ```
-/plugin marketplace remove mpolatcan/ccbell
+/plugin marketplace remove mpolatcan/claude-plugins
 ```
 
 ### If installed manually:

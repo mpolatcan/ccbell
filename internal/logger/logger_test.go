@@ -3,6 +3,7 @@ package logger
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -40,7 +41,12 @@ func TestNew(t *testing.T) {
 			if l.enabled != tt.enabled {
 				t.Errorf("enabled = %v, want %v", l.enabled, tt.enabled)
 			}
-			if l.filePath != tt.wantPath {
+			// Normalize path separators for Windows compatibility
+			gotPath := l.filePath
+			if runtime.GOOS == "windows" {
+				gotPath = filepath.ToSlash(gotPath)
+			}
+			if gotPath != tt.wantPath {
 				t.Errorf("filePath = %v, want %v", l.filePath, tt.wantPath)
 			}
 			if l.pid == 0 {

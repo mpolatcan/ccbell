@@ -30,7 +30,12 @@ func TestNewManager(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := NewManager(tt.homeDir)
-			if m.filePath != tt.wantPath {
+			// Normalize path separators for Windows compatibility
+			gotPath := m.filePath
+			if runtime.GOOS == "windows" {
+				gotPath = filepath.ToSlash(gotPath)
+			}
+			if gotPath != tt.wantPath {
 				t.Errorf("filePath = %v, want %v", m.filePath, tt.wantPath)
 			}
 		})

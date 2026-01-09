@@ -99,7 +99,9 @@ func TestLogger_Debug(t *testing.T) {
 }
 
 func TestLogger_SetEnabled(t *testing.T) {
-	l := New(false, "/tmp")
+	tmpDir, _ := os.MkdirTemp("", "ccbell-test")
+	defer os.RemoveAll(tmpDir)
+	l := New(false, tmpDir)
 
 	if l.IsEnabled() {
 		t.Error("should start disabled")

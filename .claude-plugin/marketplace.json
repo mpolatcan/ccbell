@@ -16,7 +16,10 @@
         "name": "Mutlu Polatcan",
         "email": "mutlupolatcan@gmail.com"
       },
-      "source": "github:mpolatcan/ccbell",
+      "source": {
+        "source": "github",
+        "repo": "mpolatcan/ccbell"
+      },
       "category": "productivity"
     }
   ]

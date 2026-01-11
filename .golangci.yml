@@ -29,9 +29,9 @@ linters:
     - gosec
     - gochecknoglobals
 
-linters-settings:
+linters_settings:
   govet:
-    enable-all: true
+    enable_all: true
     disable:
       - fieldalignment
 
@@ -39,7 +39,7 @@ linters-settings:
     locale: US
 
   gocritic:
-    enabled-tags:
+    enabled_tags:
       - diagnostic
       - style
       - performance
@@ -66,11 +66,11 @@ linters-settings:
       - name: errorf
 
 issues:
-  exclude-use-default: false
-  max-issues-per-linter: 50
-  max-same-issues: 3
+  exclude_use_default: false
+  max_issues_per_linter: 50
+  max_same_issues: 3
 
-  exclude-rules:
+  exclude_rules:
     # Allow fmt.Printf in main.go (CLI output)
     - path: cmd/ccbell/main.go
       linters:

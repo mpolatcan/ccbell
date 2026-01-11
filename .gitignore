@@ -1,6 +1,7 @@
 # Build artifacts
 bin/
 dist/
+.out/
 coverage.out
 coverage.html
 

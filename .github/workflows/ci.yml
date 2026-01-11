@@ -44,8 +44,7 @@ jobs:
       - name: Clean up test artifacts
         if: runner.os != 'Windows'
         run: |
-          if [ -d ".out" ]; then rm -rf .out; fi
-          if [ -f "coverage.out" ]; then rm -f coverage.out; fi
+          rm -rf .out coverage.out
 
       - name: Clean up test artifacts (Windows)
         if: runner.os == 'Windows'
@@ -77,7 +76,7 @@ jobs:
           go-version: '1.25.5'
 
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v7
         with:
           version: v2.1.2
           args: --timeout=5m

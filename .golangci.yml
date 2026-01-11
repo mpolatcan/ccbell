@@ -2,7 +2,6 @@ version: "2"
 
 run:
   timeout: 5m
-  modules-download-mode: readonly
 
 linters:
   enable:
@@ -28,6 +27,3 @@ linters:
     - errcheck
     - gosec
     - gochecknoglobals
-
-issues:
-  exclude_use_default: false

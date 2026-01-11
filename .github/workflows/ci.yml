@@ -42,9 +42,16 @@ jobs:
         run: go mod download
 
       - name: Clean up test artifacts
+        if: runner.os != 'Windows'
         run: |
           if [ -d ".out" ]; then rm -rf .out; fi
           if [ -f "coverage.out" ]; then rm -f coverage.out; fi
+
+      - name: Clean up test artifacts (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          if (Test-Path ".out") { Remove-Item -Recurse -Force ".out" -ErrorAction SilentlyContinue }
+          if (Test-Path "coverage.out") { Remove-Item "coverage.out" -ErrorAction SilentlyContinue }
 
       - name: Run tests
         run: go test -v -race -coverprofile=coverage.out ./...
@@ -72,7 +79,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.62.2
+          version: v2.1.2
           args: --timeout=5m
 
   build:

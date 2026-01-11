@@ -15,6 +15,27 @@ import (
 	"github.com/mpolatcan/ccbell/internal/state"
 )
 
+func derefBool(ptr *bool, defaultVal bool) bool {
+	if ptr == nil {
+		return defaultVal
+	}
+	return *ptr
+}
+
+func derefFloat(ptr *float64, defaultVal float64) float64 {
+	if ptr == nil {
+		return defaultVal
+	}
+	return *ptr
+}
+
+func derefInt(ptr *int, defaultVal int) int {
+	if ptr == nil {
+		return defaultVal
+	}
+	return *ptr
+}
+
 // Build-time variables (set via -ldflags).
 var (
 	version   = "dev"
@@ -110,10 +131,10 @@ func run() error {
 	eventCfg := cfg.GetEventConfig(eventType)
 	log.Debug("Active profile: %s", cfg.ActiveProfile)
 	log.Debug("Event config: enabled=%v, sound=%s, volume=%.2f, cooldown=%d",
-		*eventCfg.Enabled, eventCfg.Sound, *eventCfg.Volume, *eventCfg.Cooldown)
+		derefBool(eventCfg.Enabled, true), eventCfg.Sound, derefFloat(eventCfg.Volume, 0.5), derefInt(eventCfg.Cooldown, 0))
 
 	// === Check event enable ===
-	if !*eventCfg.Enabled {
+	if !derefBool(eventCfg.Enabled, true) {
 		log.Debug("Event '%s' is disabled, exiting", eventType)
 		return nil
 	}
@@ -127,11 +148,11 @@ func run() error {
 
 	// === Check cooldown ===
 	stateManager := state.NewManager(homeDir)
-	inCooldown, err := stateManager.CheckCooldown(eventType, *eventCfg.Cooldown)
+	inCooldown, err := stateManager.CheckCooldown(eventType, derefInt(eventCfg.Cooldown, 0))
 	if err != nil {
 		log.Debug("Cooldown check error: %v, proceeding with notification", err)
 	} else if inCooldown {
-		log.Debug("In cooldown period (%ds), suppressing notification", *eventCfg.Cooldown)
+		log.Debug("In cooldown period (%ds), suppressing notification", derefInt(eventCfg.Cooldown, 0))
 		return nil
 	}
 
@@ -152,7 +173,7 @@ func run() error {
 	log.Debug("Final sound path: %s", soundPath)
 
 	// === Play sound ===
-	if err := player.Play(soundPath, *eventCfg.Volume); err != nil {
+	if err := player.Play(soundPath, derefFloat(eventCfg.Volume, 0.5)); err != nil {
 		log.Debug("Sound playback failed: %v", err)
 		return fmt.Errorf("sound playback failed: %w", err)
 	}

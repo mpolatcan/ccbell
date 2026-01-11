@@ -23,6 +23,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Clean up test artifacts
+        if: runner.os != 'Windows'
+        run: |
+          rm -rf .out coverage.out
+
+      - name: Clean up test artifacts (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          if (Test-Path ".out") { Remove-Item -Recurse -Force ".out" -ErrorAction SilentlyContinue }
+          if (Test-Path "coverage.out") { Remove-Item "coverage.out" -ErrorAction SilentlyContinue }
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -37,17 +48,6 @@ jobs:
           key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-${{ matrix.go-version }}-
-
-      - name: Clean up test artifacts
-        if: runner.os != 'Windows'
-        run: |
-          rm -rf .out coverage.out
-
-      - name: Clean up test artifacts (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          if (Test-Path ".out") { Remove-Item -Recurse -Force ".out" -ErrorAction SilentlyContinue }
-          if (Test-Path "coverage.out") { Remove-Item "coverage.out" -ErrorAction SilentlyContinue }
 
       - name: Download dependencies
         run: go mod download
@@ -78,7 +78,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v7
         with:
-          version: v2.1.5
+          version: v2.2.0
           args: --timeout=5m
 
   build:

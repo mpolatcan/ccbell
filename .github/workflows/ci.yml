@@ -34,12 +34,9 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
+          key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-${{ matrix.go-version }}-
-
-      - name: Download dependencies
-        run: go mod download
 
       - name: Clean up test artifacts
         if: runner.os != 'Windows'
@@ -51,6 +48,9 @@ jobs:
         run: |
           if (Test-Path ".out") { Remove-Item -Recurse -Force ".out" -ErrorAction SilentlyContinue }
           if (Test-Path "coverage.out") { Remove-Item "coverage.out" -ErrorAction SilentlyContinue }
+
+      - name: Download dependencies
+        run: go mod download
 
       - name: Run tests
         run: go test -v -race -coverprofile=coverage.out ./...
@@ -78,7 +78,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v7
         with:
-          version: v2.1.2
+          version: v2.1.5
           args: --timeout=5m
 
   build:

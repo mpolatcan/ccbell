@@ -213,28 +213,6 @@ func IsValidEvent(eventType string) bool {
 	return ValidEvents[eventType]
 }
 
-// Helper functions for safe pointer dereference.
-func derefBool(ptr *bool, defaultVal bool) bool {
-	if ptr == nil {
-		return defaultVal
-	}
-	return *ptr
-}
-
-func derefFloat(ptr *float64, defaultVal float64) float64 {
-	if ptr == nil {
-		return defaultVal
-	}
-	return *ptr
-}
-
-func derefInt(ptr *int, defaultVal int) int {
-	if ptr == nil {
-		return defaultVal
-	}
-	return *ptr
-}
-
 // ValidateEventType returns an error if the event type is invalid.
 func ValidateEventType(eventType string) error {
 	// Check format (alphanumeric and underscore only)

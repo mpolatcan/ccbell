@@ -110,14 +110,13 @@ func TestDetectPlatform(t *testing.T) {
 		if platform != PlatformMacOS {
 			t.Errorf("expected PlatformMacOS on darwin, got %s", platform)
 		}
-	case "windows":
-		if platform != PlatformWindows {
-			t.Errorf("expected PlatformWindows on windows, got %s", platform)
-		}
 	case "linux":
-		// Could be Linux or WSL
-		if platform != PlatformLinux && platform != PlatformWSL {
-			t.Errorf("expected PlatformLinux or PlatformWSL on linux, got %s", platform)
+		if platform != PlatformLinux {
+			t.Errorf("expected PlatformLinux on linux, got %s", platform)
+		}
+	default:
+		if platform != PlatformUnknown {
+			t.Errorf("expected PlatformUnknown on %s, got %s", runtime.GOOS, platform)
 		}
 	}
 }
@@ -205,8 +204,6 @@ func TestPlayerPlatform(t *testing.T) {
 	validPlatforms := map[Platform]bool{
 		PlatformMacOS:   true,
 		PlatformLinux:   true,
-		PlatformWindows: true,
-		PlatformWSL:     true,
 		PlatformUnknown: true,
 	}
 

@@ -14,12 +14,12 @@ This repository contains the Go source code for the `ccbell` binary. The distrib
 ccbell (this repo)              cc-plugins (marketplace)
 ├── cmd/ccbell/main.go          ├── plugins/ccbell/
 ├── internal/                   │   ├── .claude-plugin/
-│   ├── audio/     # Playback   │   │   ├── plugin.json
-│   ├── config/    # Config     │   │   └── marketplace.json
-│   ├── logger/    # Logging    │   ├── hooks/hooks.json
-│   └── state/     # Cooldown   │   ├── sounds/*.aiff
-├── go.mod                      │   ├── commands/*.md
-└── Makefile                    └── scripts/ccbell.sh
+│   ├── audio/     # Playback   │   │   ├── plugin.json (hooks inline)
+│   ├── config/    # Config     │   ├── sounds/*.aiff
+│   ├── logger/    # Logging    │   ├── commands/*.md
+│   └── state/     # Cooldown   └── scripts/ccbell.sh
+├── go.mod
+└── Makefile
 ```
 
 **Flow:**

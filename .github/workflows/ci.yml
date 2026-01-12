@@ -57,15 +57,14 @@ jobs:
       - name: Run tests (Linux/macOS)
         if: runner.os != 'Windows'
         run: |
-          PACKAGES=$(go list ./... | grep -v '/\.out$')
-          go test -v -race -coverprofile=coverage.out $PACKAGES
+          go test -v -race -coverprofile=coverage.out $(go list ./... | grep -v '/\.out$')
         shell: bash
 
       - name: Run tests (Windows)
         if: runner.os == 'Windows'
         run: |
-          $packages = (go list ./... | Where-Object { $_ -notmatch '/\.out$' }) -join ' '
-          go test -v -race -coverprofile=coverage.out $packages
+          $packages = go list ./... | Where-Object { $_ -notmatch '/\.out$' }
+          foreach ($pkg in $packages) { go test -v -race -coverprofile=coverage.out $pkg }
         shell: pwsh
 
       - name: Upload coverage

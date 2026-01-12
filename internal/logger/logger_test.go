@@ -98,26 +98,6 @@ func TestLogger_Debug(t *testing.T) {
 	})
 }
 
-func TestLogger_SetEnabled(t *testing.T) {
-	tmpDir, _ := os.MkdirTemp("", "ccbell-test")
-	defer os.RemoveAll(tmpDir)
-	l := New(false, tmpDir)
-
-	if l.IsEnabled() {
-		t.Error("should start disabled")
-	}
-
-	l.SetEnabled(true)
-	if !l.IsEnabled() {
-		t.Error("should be enabled after SetEnabled(true)")
-	}
-
-	l.SetEnabled(false)
-	if l.IsEnabled() {
-		t.Error("should be disabled after SetEnabled(false)")
-	}
-}
-
 func TestLogger_RotateIfNeeded(t *testing.T) {
 	// Create temp directory
 	tmpDir, err := os.MkdirTemp("", "ccbell-rotate-test")

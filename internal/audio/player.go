@@ -22,14 +22,14 @@ const (
 	PlatformUnknown Platform = "unknown"
 )
 
+// bundledSoundNameRegex validates bundled sound names.
+var bundledSoundNameRegex = regexp.MustCompile(`^[a-z_]+$`)
+
 // Player handles audio playback.
 type Player struct {
 	platform   Platform
 	pluginRoot string
 }
-
-// bundledSoundNameRegex validates bundled sound names.
-var bundledSoundNameRegex = regexp.MustCompile(`^[a-z_]+$`)
 
 // NewPlayer creates a new audio player.
 func NewPlayer(pluginRoot string) *Player {

@@ -207,7 +207,7 @@ func TestLoadConfig(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		cfg, path, err := Load("", tempDir, "")
+		cfg, path, err := Load(tempDir)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 			return
@@ -229,7 +229,7 @@ func TestLoadConfig(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		_, _, err := Load("", tempDir, "")
+		_, _, err := Load(tempDir)
 		if err == nil {
 			t.Error("expected error for invalid JSON")
 		}
@@ -238,7 +238,7 @@ func TestLoadConfig(t *testing.T) {
 	t.Run("returns defaults when no config exists", func(t *testing.T) {
 		os.Remove(filepath.Join(claudeDir, "ccbell.config.json"))
 
-		cfg, path, err := Load("", tempDir, "")
+		cfg, path, err := Load(tempDir)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}

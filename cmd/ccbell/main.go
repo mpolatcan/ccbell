@@ -151,7 +151,7 @@ func run() error {
 	}
 
 	// === Load configuration ===
-	cfg, configPath, configErr := config.Load("", homeDir, pluginRoot)
+	cfg, configPath, configErr := config.Load(homeDir)
 	if configErr != nil {
 		// Config error shouldn't be fatal - use defaults
 		cfg = config.Default()

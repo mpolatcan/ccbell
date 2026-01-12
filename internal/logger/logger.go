@@ -94,17 +94,3 @@ func (l *Logger) rotateIfNeeded() {
 		}
 	}
 }
-
-// SetEnabled enables or disables logging.
-func (l *Logger) SetEnabled(enabled bool) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	l.enabled = enabled
-}
-
-// IsEnabled returns whether logging is enabled.
-func (l *Logger) IsEnabled() bool {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	return l.enabled
-}

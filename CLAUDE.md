@@ -13,47 +13,44 @@ Plays sound notifications when Claude finishes responding, needs permission, is 
 ### Plugin Distribution (cc-plugins repo)
 
 The `cc-plugins` repository distributes the plugin with:
-- `plugins/ccbell/plugin.json` - Plugin manifest
-- `plugins/ccbell/hooks/hooks.json` - Hook definitions for Claude Code events
+- `plugins/ccbell/.claude-plugin/plugin.json` - Plugin manifest with commands and hooks
 - `plugins/ccbell/sounds/*.aiff` - Audio files for each event type
 - `plugins/ccbell/commands/*.md` - Slash command documentation
-
-**Important:** Always refer to the official Claude Code documentation for the latest plugin and hooks specifications:
-- [Plugins Reference](https://code.claude.com/docs/en/plugins-reference)
-- [Hooks Reference](https://code.claude.com/docs/en/hooks)
-
-Plugin schemas and hook events may change. The documentation above reflects the current state at the time of writing.
-
-**Hook Events Used:**
-| Event | Description |
-|-------|-------------|
-| `Stop` | Claude finishes responding |
-| `PermissionPrompt` | Claude needs permission |
-| `UserPromptSubmit` | User waiting for input |
-| `SubagentStop` | Subagent task completes |
-
-**Hook Structure (hooks.json):**
-```json
-{
-  "Stop": [
-    {
-      "matcher": "*",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "ccbell stop"
-        }
-      ]
-    }
-  ]
-}
-```
+- `plugins/ccbell/scripts/ccbell.sh` - Downloader script for the Go binary
 
 ### Binary Distribution (ccbell repo)
 
 The `ccbell` repository builds and releases Go binaries via GitHub Actions.
 
 **Note:** Binary installation is automatically handled by the `ccbell.sh` script in the cc-plugins repository, which downloads the correct Go binary for your platform from GitHub releases.
+
+## Official Documentation (ALWAYS refer to these)
+
+**IMPORTANT:** Plugin schemas and hook events may change. Always consult the official documentation for the latest specifications.
+
+| Documentation | URL |
+|--------------|-----|
+| Plugins Overview | https://code.claude.com/docs/en/plugins |
+| Discover Plugins | https://code.claude.com/docs/en/discover-plugins |
+| **Plugins Reference** | https://code.claude.com/docs/en/plugins-reference |
+| **Hooks Reference** | https://code.claude.com/docs/en/hooks |
+| Plugin Marketplaces | https://code.claude.com/docs/en/plugin-marketplaces |
+
+### Key Documentation Sections
+
+- **Plugin Manifest** - See [Plugins Reference: Manifest](https://code.claude.com/docs/en/plugins-reference#manifest)
+- **Commands** - See [Plugins Reference: Commands](https://code.claude.com/docs/en/plugins-reference#commands)
+- **Hooks** - See [Hooks Reference](https://code.claude.com/docs/en/hooks) and [Plugins Reference: Hooks](https://code.claude.com/docs/en/plugins-reference#hooks)
+- **Events** - See [Hooks Reference: Events](https://code.claude.com/docs/en/hooks#events)
+
+### Hook Events Used
+
+| Event | Description |
+|-------|-------------|
+| `Stop` | Claude finishes responding |
+| `Notification` (permission_prompt) | Claude needs permission |
+| `Notification` (idle_prompt) | User waiting for input |
+| `SubagentStop` | Subagent task completes |
 
 ## Commands
 
@@ -74,7 +71,7 @@ make install         # Install to ~/.claude/plugins/local/ccbell/bin/
 ccbell <event_type>
 ```
 
-Event types: `stop`, `permission_prompt`, `user_prompt_submit`, `subagent_stop`
+Event types: `stop`, `permission_prompt`, `idle_prompt`, `subagent`
 
 ## Audio Backends
 

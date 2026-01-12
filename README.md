@@ -14,7 +14,7 @@ This repository contains the Go source code for the `ccbell` binary. The distrib
 ccbell (this repo)              cc-plugins (marketplace)
 ├── cmd/ccbell/main.go          ├── plugins/ccbell/
 ├── internal/                   │   ├── .claude-plugin/
-│   ├── audio/     # Playback   │   │   ├── plugin.json (hooks inline)
+│   ├── audio/     # Playback   │   │   ├── plugin.json (metadata only)
 │   ├── config/    # Config     │   ├── sounds/*.aiff
 │   ├── logger/    # Logging    │   ├── commands/*.md
 │   └── state/     # Cooldown   └── scripts/ccbell.sh

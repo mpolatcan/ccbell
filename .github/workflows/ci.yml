@@ -64,7 +64,7 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           $allPackages = go list ./...
-          $packages = $allPackages | Where-Object { $_ -notmatch '\.[\\/]|\.out$' }
+          $packages = $allPackages | Where-Object { $_ -notmatch '^\.' -and $_ -notmatch '\\.out$' }
           go test -v -race -coverprofile=coverage.txt $packages
         shell: pwsh
 

@@ -63,7 +63,7 @@ jobs:
       - name: Run tests (Windows)
         if: runner.os == 'Windows'
         run: |
-          $packages = go list ./... | Where-Object { $_ -notin @('.out', '.\.out') }
+          $packages = go list ./... | Where-Object { $_ -notlike '*.out' }
           foreach ($pkg in $packages) { go test -v -race -coverprofile=coverage.out $pkg }
         shell: pwsh
 

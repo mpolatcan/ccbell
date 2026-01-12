@@ -649,6 +649,17 @@ func TestRunWithProjectConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// Create sounds directory for plugin root (required for audio playback)
+	soundsDir := filepath.Join(tmpDir, "sounds")
+	if err := os.MkdirAll(soundsDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	// Create bundled stop.aiff
+	stopSound := filepath.Join(soundsDir, "stop.aiff")
+	if err := os.WriteFile(stopSound, []byte("dummy"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
 	// Set environment
 	os.Setenv("HOME", tmpDir)
 	os.Setenv("CLAUDE_PROJECT_DIR", projectDir)

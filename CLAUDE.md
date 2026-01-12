@@ -13,16 +13,47 @@ Plays sound notifications when Claude finishes responding, needs permission, is 
 ### Plugin Distribution (cc-plugins repo)
 
 The `cc-plugins` repository distributes the plugin with:
-- `plugins/ccbell/.claude-plugin/plugin.json` - Plugin manifest (no scripts/postinstall support in Claude Code)
+- `plugins/ccbell/plugin.json` - Plugin manifest
 - `plugins/ccbell/hooks/hooks.json` - Hook definitions for Claude Code events
 - `plugins/ccbell/sounds/*.aiff` - Audio files for each event type
 - `plugins/ccbell/commands/*.md` - Slash command documentation
+
+**Important:** Always refer to the official Claude Code documentation for the latest plugin and hooks specifications:
+- [Plugins Reference](https://code.claude.com/docs/en/plugins-reference)
+- [Hooks Reference](https://code.claude.com/docs/en/hooks)
+
+Plugin schemas and hook events may change. The documentation above reflects the current state at the time of writing.
+
+**Hook Events Used:**
+| Event | Description |
+|-------|-------------|
+| `Stop` | Claude finishes responding |
+| `PermissionPrompt` | Claude needs permission |
+| `UserPromptSubmit` | User waiting for input |
+| `SubagentStop` | Subagent task completes |
+
+**Hook Structure (hooks.json):**
+```json
+{
+  "Stop": [
+    {
+      "matcher": "*",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "ccbell stop"
+        }
+      ]
+    }
+  ]
+}
+```
 
 ### Binary Distribution (ccbell repo)
 
 The `ccbell` repository builds and releases Go binaries via GitHub Actions.
 
-**Note:** Claude Code plugins don't support `scripts/postinstall` in the manifest. Binary installation must be done manually or via a different mechanism.
+**Note:** Binary installation is automatically handled by the `ccbell.sh` script in the cc-plugins repository, which downloads the correct Go binary for your platform from GitHub releases.
 
 ## Commands
 
@@ -43,7 +74,7 @@ make install         # Install to ~/.claude/plugins/local/ccbell/bin/
 ccbell <event_type>
 ```
 
-Event types: `stop`, `permission_prompt`, `idle_prompt`, `subagent`
+Event types: `stop`, `permission_prompt`, `user_prompt_submit`, `subagent_stop`
 
 ## Audio Backends
 

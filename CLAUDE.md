@@ -34,7 +34,6 @@ Event types: `stop`, `permission_prompt`, `idle_prompt`, `subagent`
 |----------|---------|
 | macOS | `afplay` |
 | Linux | `paplay`, `aplay`, `mpv`, or `ffplay` |
-| Windows | PowerShell `Media.SoundPlayer` |
 
 ## Release Process
 

@@ -26,8 +26,7 @@ PLATFORMS := \
 	darwin/amd64 \
 	darwin/arm64 \
 	linux/amd64 \
-	linux/arm64 \
-	windows/amd64
+	linux/arm64
 
 # Colors for output
 BLUE  := \033[0;34m
@@ -84,16 +83,28 @@ clean:
 # Install to plugin directory
 install: build
 	@echo "$(BLUE)Installing to plugin directory...$(RESET)"
-	@mkdir -p $(HOME)/.claude/plugins/cache/cc-plugins/ccbell/bin
-	cp $(BUILD_DIR)/$(BINARY_NAME) $(HOME)/.claude/plugins/cache/cc-plugins/ccbell/bin/
-	chmod +x $(HOME)/.claude/plugins/cache/cc-plugins/ccbell/bin/$(BINARY_NAME)
-	@echo "$(GREEN)✓ Installed to ~/.claude/plugins/cache/cc-plugins/ccbell/bin/$(BINARY_NAME)$(RESET)"
+	@# Find ccbell plugin in any marketplace path
+	@CCBELL_PATH=$$(find "$(HOME)/.claude/plugins/cache" -mindepth 3 -maxdepth 3 -type d -name "ccbell" 2>/dev/null | head -1); \
+	if [ -z "$$CCBELL_PATH" ]; then \
+		echo "Error: ccbell plugin not found in ~/.claude/plugins/cache"; \
+		exit 1; \
+	fi; \
+	mkdir -p "$$CCBELL_PATH/bin"; \
+	cp $(BUILD_DIR)/$(BINARY_NAME) "$$CCBELL_PATH/bin/"; \
+	chmod +x "$$CCBELL_PATH/bin/$(BINARY_NAME)"; \
+	echo "$(GREEN)✓ Installed to $$CCBELL_PATH/bin/$(BINARY_NAME)$(RESET)"
 
 # Uninstall from plugin directory
 uninstall:
 	@echo "$(BLUE)Uninstalling...$(RESET)"
-	rm -f $(HOME)/.claude/plugins/cache/cc-plugins/ccbell/bin/$(BINARY_NAME)
-	@echo "$(GREEN)✓ Uninstalled$(RESET)"
+	@# Find ccbell plugin in any marketplace path
+	@CCBELL_PATH=$$(find "$(HOME)/.claude/plugins/cache" -mindepth 3 -maxdepth 3 -type d -name "ccbell" 2>/dev/null | head -1); \
+	if [ -n "$$CCBELL_PATH" ]; then \
+		rm -f "$$CCBELL_PATH/bin/$(BINARY_NAME)"; \
+		echo "$(GREEN)✓ Uninstalled from $$CCBELL_PATH/bin/$(BINARY_NAME)$(RESET)"; \
+	else \
+		echo "ccbell plugin not found"; \
+	fi
 
 # Build for all platforms
 dist: clean
@@ -103,9 +114,6 @@ dist: clean
 		GOOS=$${platform%/*}; \
 		GOARCH=$${platform#*/}; \
 		output_name=$(BINARY_NAME)-$${GOOS}-$${GOARCH}; \
-		if [ "$${GOOS}" = "windows" ]; then \
-			output_name=$${output_name}.exe; \
-		fi; \
 		echo "  Building $${output_name}..."; \
 		GOOS=$${GOOS} GOARCH=$${GOARCH} $(GO) build $(GOFLAGS) \
 			-ldflags "$(LDFLAGS)" \
@@ -126,19 +134,12 @@ release: dist checksums
 	@echo "$(BLUE)Creating release archives...$(RESET)"
 	@cd $(DIST_DIR) && for f in $(BINARY_NAME)-*; do \
 		if [ -f "$$f" ] && [ "$$f" != "checksums.txt" ]; then \
-			name=$${f%.*}; \
-			ext=$${f##*.}; \
-			if [ "$$ext" = "exe" ]; then \
-				zip -q "$${name}.zip" "$$f"; \
-				echo "  Created $${name}.zip"; \
-			else \
-				tar -czf "$${f}.tar.gz" "$$f"; \
-				echo "  Created $${f}.tar.gz"; \
-			fi; \
+			tar -czf "$$f.tar.gz" "$$f"; \
+			echo "  Created $${f}.tar.gz"; \
 		fi; \
 	done
 	@echo "$(GREEN)✓ Release archives created$(RESET)"
-	@ls -lh $(DIST_DIR)/*.tar.gz $(DIST_DIR)/*.zip 2>/dev/null || true
+	@ls -lh $(DIST_DIR)/*.tar.gz 2>/dev/null || true
 
 # Quick build and test
 check: fmt lint test build
@@ -161,6 +162,33 @@ dev:
 run: build
 	@$(BUILD_DIR)/$(BINARY_NAME) $(ARGS)
 
+# Sync version to cc-plugins marketplace
+sync-version:
+	@echo "$(BLUE)Syncing version to cc-plugins...$(RESET)"
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Error: VERSION is required. Usage: make sync-version VERSION=v1.0.0"; \
+		exit 1; \
+	fi
+	@if [ ! -d "../cc-plugins" ]; then \
+		echo "Error: ../cc-plugins directory not found. Clone it first."; \
+		exit 1; \
+	fi
+	@SCRIPT_PATH="../cc-plugins/plugins/ccbell/scripts/ccbell.sh"; \
+	if [ ! -f "$$SCRIPT_PATH" ]; then \
+		echo "Error: $$SCRIPT_PATH not found"; \
+		exit 1; \
+	fi
+	@SED_EXT=""; \
+	case "$$(uname -s)" in \
+		Darwin*) SED_EXT="''" ;; \
+		Linux*)  SED_EXT="" ;; \
+	esac; \
+	# Extract version without 'v' prefix for PLUGIN_VERSION matching
+	PLUGIN_VER=$$(echo "$(VERSION)" | sed 's/^v//'); \
+	sed -i $$SED_EXT "s/PLUGIN_VERSION=\"[0-9.]*\"/PLUGIN_VERSION=\"$$PLUGIN_VER\"/g" "$$SCRIPT_PATH"
+	@echo "$(GREEN)✓ Updated PLUGIN_VERSION to $$PLUGIN_VER in $$SCRIPT_PATH$(RESET)"
+	@echo "$(BLUE)Don't forget to commit and push the change in cc-plugins!$(RESET)"
+
 # Help
 help:
 	@echo "ccbell Makefile"
@@ -168,28 +196,30 @@ help:
 	@echo "Usage: make [target]"
 	@echo ""
 	@echo "Targets:"
-	@echo "  build      Build for current platform (default)"
-	@echo "  test       Run tests with race detection"
-	@echo "  coverage   Run tests and generate coverage report"
-	@echo "  lint       Run linter (golangci-lint or go vet)"
-	@echo "  fmt        Format code"
-	@echo "  clean      Remove build artifacts"
-	@echo "  install    Install to ~/.claude/plugins/cache/cc-plugins/ccbell/bin/"
-	@echo "  uninstall  Remove from plugin directory"
-	@echo "  dist       Build for all platforms"
-	@echo "  checksums  Generate SHA256 checksums"
-	@echo "  release    Build, checksum, and create archives"
-	@echo "  check      Run fmt, lint, test, and build"
-	@echo "  dev        Quick development build"
-	@echo "  version    Show version info"
-	@echo "  help       Show this help"
+	@echo "  build         Build for current platform (default)"
+	@echo "  test          Run tests with race detection"
+	@echo "  coverage      Run tests and generate coverage report"
+	@echo "  lint          Run linter (golangci-lint or go vet)"
+	@echo "  fmt           Format code"
+	@echo "  clean         Remove build artifacts"
+	@echo "  install       Install ccbell binary to plugin directory"
+	@echo "  uninstall     Remove from plugin directory"
+	@echo "  dist          Build for all platforms"
+	@echo "  checksums     Generate SHA256 checksums"
+	@echo "  release       Build, checksum, and create archives"
+	@echo "  sync-version  Sync version to cc-plugins marketplace (requires VERSION=)"
+	@echo "  check         Run fmt, lint, test, and build"
+	@echo "  dev           Quick development build"
+	@echo "  version       Show version info"
+	@echo "  help          Show this help"
 	@echo ""
 	@echo "Platforms: $(PLATFORMS)"
 	@echo ""
 	@echo "Examples:"
-	@echo "  make                    # Build for current platform"
-	@echo "  make test               # Run tests"
-	@echo "  make dist               # Cross-compile for all platforms"
-	@echo "  make release            # Create release with archives"
-	@echo "  make install            # Install to plugin directory"
-	@echo "  make run ARGS=stop      # Build and run with arguments"
+	@echo "  make                          # Build for current platform"
+	@echo "  make test                     # Run tests"
+	@echo "  make dist                     # Cross-compile for all platforms"
+	@echo "  make release                  # Create release with archives"
+	@echo "  make sync-version VERSION=v1.0.0  # Sync version to cc-plugins"
+	@echo "  make install                  # Install to plugin directory"
+	@echo "  make run ARGS=stop            # Build and run with arguments"

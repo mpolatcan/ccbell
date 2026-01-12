@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
         go-version: ['1.25.5']
 
     steps:
@@ -28,13 +28,6 @@ jobs:
           if [ -d ".out" ]; then rm -rf .out; fi
           if [ -f "coverage.out" ]; then rm -f coverage.out; fi
         shell: bash
-
-      - name: Remove .out directory (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          if (Test-Path ".out") { Remove-Item -Recurse -Force ".out" -ErrorAction Stop } else { Write-Host ".out does not exist" }
-          if (Test-Path "coverage.out") { Remove-Item "coverage.out" }
-        shell: pwsh
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -54,21 +47,10 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
-      - name: Run tests (Linux/macOS)
-        if: runner.os != 'Windows'
+      - name: Run tests
         run: |
           go test -v -race -coverprofile=coverage.out $(go list ./... | grep -v '/\.out$')
         shell: bash
-
-      - name: Run tests (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          $allPackages = go list ./...
-          $packages = $allPackages | Where-Object { $_ -notmatch '^\.' }
-          foreach ($pkg in $packages) {
-            go test -v -race -coverprofile=coveragedata $pkg
-          }
-        shell: pwsh
 
       - name: Upload coverage
         if: matrix.os == 'ubuntu-latest' && matrix.go-version == '1.25.5'

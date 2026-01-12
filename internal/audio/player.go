@@ -19,8 +19,6 @@ type Platform string
 const (
 	PlatformMacOS   Platform = "macos"   // Apple macOS
 	PlatformLinux   Platform = "linux"   // Linux
-	PlatformWindows Platform = "windows" // Microsoft Windows
-	PlatformWSL     Platform = "wsl"     // Windows Subsystem for Linux
 	PlatformUnknown Platform = "unknown"
 )
 
@@ -46,17 +44,7 @@ func detectPlatform() Platform {
 	switch runtime.GOOS {
 	case "darwin":
 		return PlatformMacOS
-	case "windows":
-		return PlatformWindows
 	case "linux":
-		// Check for WSL (both legacy and WSL2)
-		if _, err := os.Stat("/proc/sys/fs/binfmt_misc/WSLInterop"); err == nil {
-			return PlatformWSL
-		}
-		// WSL2 uses a different mechanism - check for WSL-specific environment
-		if os.Getenv("WSL_DISTRO_NAME") != "" || os.Getenv("WSL_INTEROP") != "" {
-			return PlatformWSL
-		}
 		return PlatformLinux
 	default:
 		return PlatformUnknown
@@ -76,10 +64,8 @@ func (p *Player) Play(soundPath string, volume float64) error {
 	switch p.platform {
 	case PlatformMacOS:
 		return p.playMacOS(soundPath, volume)
-	case PlatformLinux, PlatformWSL:
+	case PlatformLinux:
 		return p.playLinux(soundPath, volume)
-	case PlatformWindows:
-		return p.playWindows(soundPath)
 	case PlatformUnknown:
 		return fmt.Errorf("unsupported platform: %s", p.platform)
 	default:
@@ -118,31 +104,6 @@ func (p *Player) playLinux(soundPath string, volume float64) error {
 	}
 
 	return errors.New("no audio player found; install pulseaudio, alsa-utils, mpv, or ffmpeg")
-}
-
-// playWindows uses PowerShell on Windows.
-// Security: Uses -File parameter with a temp script to avoid command injection.
-func (p *Player) playWindows(soundPath string) error {
-	// Security: Validate path contains only safe characters
-	// Allow alphanumeric, spaces, common path chars, but block dangerous ones
-	for _, r := range soundPath {
-		if r == ';' || r == '&' || r == '|' || r == '`' || r == '$' || r == '(' || r == ')' || r == '{' || r == '}' || r == '<' || r == '>' || r == '\n' || r == '\r' {
-			return fmt.Errorf("invalid character in sound path: %q", string(r))
-		}
-	}
-
-	// Use PowerShell with properly escaped path
-	// Double single quotes for PowerShell string escaping
-	escaped := strings.ReplaceAll(soundPath, "'", "''")
-	// Also escape backticks which are PowerShell's escape character
-	escaped = strings.ReplaceAll(escaped, "`", "``")
-
-	psCmd := fmt.Sprintf("(New-Object Media.SoundPlayer '%s').PlaySync()", escaped)
-
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-c", psCmd)
-	// Note: PlaySync() is synchronous in PowerShell, but cmd.Start() is used
-	// to launch the PowerShell process. The process runs in the background.
-	return cmd.Start()
 }
 
 // ResolveSoundPath resolves a sound specification to an absolute file path.
@@ -234,16 +195,13 @@ func (p *Player) HasAudioPlayer() bool {
 	case PlatformMacOS:
 		_, err := exec.LookPath("afplay")
 		return err == nil
-	case PlatformLinux, PlatformWSL:
+	case PlatformLinux:
 		for _, player := range []string{"paplay", "aplay", "mpv", "ffplay"} {
 			if _, err := exec.LookPath(player); err == nil {
 				return true
 			}
 		}
 		return false
-	case PlatformWindows:
-		_, err := exec.LookPath("powershell")
-		return err == nil
 	case PlatformUnknown:
 		return false
 	default:

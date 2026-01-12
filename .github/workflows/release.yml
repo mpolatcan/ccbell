@@ -77,7 +77,6 @@ jobs:
           echo "| macOS (Apple Silicon) | \`ccbell-darwin-arm64.tar.gz\` |" >> CHANGELOG.md
           echo "| Linux (x86_64) | \`ccbell-linux-amd64.tar.gz\` |" >> CHANGELOG.md
           echo "| Linux (ARM64) | \`ccbell-linux-arm64.tar.gz\` |" >> CHANGELOG.md
-          echo "| Windows | \`ccbell-windows-amd64.zip\` |" >> CHANGELOG.md
           echo "" >> CHANGELOG.md
           echo "## Checksums" >> CHANGELOG.md
           echo "" >> CHANGELOG.md
@@ -96,7 +95,6 @@ jobs:
             dist/ccbell-darwin-arm64.tar.gz
             dist/ccbell-linux-amd64.tar.gz
             dist/ccbell-linux-arm64.tar.gz
-            dist/ccbell-windows-amd64.zip
             dist/checksums.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -107,6 +105,5 @@ jobs:
           name: release-${{ github.ref_name }}
           path: |
             dist/*.tar.gz
-            dist/*.zip
             dist/checksums.txt
           retention-days: 90

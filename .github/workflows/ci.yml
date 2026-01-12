@@ -63,12 +63,17 @@ jobs:
       - name: Run tests (Windows)
         if: runner.os == 'Windows'
         run: |
+          $allPackages = go list ./...
+          Write-Host "Raw packages: $allPackages"
           $packages = @()
-          go list ./... | ForEach-Object {
-            if ($_ -notmatch '^\.' -and $_ -notmatch '\.out$') {
+          $allPackages | ForEach-Object {
+            $shouldInclude = $_ -notmatch '^\.' -and $_ -notmatch '\.out$'
+            Write-Host "Package: $_ Include: $shouldInclude"
+            if ($shouldInclude) {
               $packages += $_
             }
           }
+          Write-Host "Final packages: $packages"
           foreach ($pkg in $packages) {
             go test -v -race -coverprofile=coverage.txt $pkg
           }

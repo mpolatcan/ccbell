@@ -63,8 +63,11 @@ jobs:
       - name: Run tests (Windows)
         if: runner.os == 'Windows'
         run: |
-          $packages = go list ./... | Where-Object { $_ -ne '.out' }
-          foreach ($pkg in $packages) { go test -v -race -coverprofile=coverage.out $pkg }
+          $packages = go list ./...
+          foreach ($pkg in $packages) {
+            if ($pkg -match '^[^.]*\.out$') { continue }
+            go test -v -race -coverprofile=coverage.out $pkg
+          }
         shell: pwsh
 
       - name: Upload coverage

@@ -63,8 +63,13 @@ jobs:
       - name: Run tests (Windows)
         if: runner.os == 'Windows'
         run: |
-          $packages = go list ./... | Where-Object { $_ -notmatch '\.out[/\\]?$' -and $_ -ne '.out' }
-          if ($packages) { go test -v -race -coverprofile=coverage.out $packages }
+          $allPackages = go list ./...
+          Write-Host "All packages: $allPackages"
+          $packages = $allPackages | Where-Object { $_ -notlike "*.out" -and $_ -ne ".out" }
+          Write-Host "Filtered packages: $packages"
+          foreach ($pkg in $packages) {
+            go test -v -race -coverprofile=coverage.out $pkg
+          }
         shell: pwsh
 
       - name: Upload coverage

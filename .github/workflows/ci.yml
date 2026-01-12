@@ -64,11 +64,9 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           $allPackages = go list ./...
-          Write-Host "All packages: $allPackages"
           $packages = $allPackages | Where-Object { $_ -notlike "*.out" -and $_ -ne ".out" }
-          Write-Host "Filtered packages: $packages"
           foreach ($pkg in $packages) {
-            go test -v -race -coverprofile=coverage.out $pkg
+            go test -v -race -coverprofile=coverage.txt $pkg
           }
         shell: pwsh
 

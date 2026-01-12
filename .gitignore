@@ -1,0 +1,22 @@
+# Build artifacts
+bin/
+dist/
+.out/
+coverage.out
+coverage.html
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Claude Code Ralph Loop
+.claude/ralph-loop.local.md

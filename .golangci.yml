@@ -1,0 +1,29 @@
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - misspell
+    - unconvert
+    - unparam
+    - gocritic
+    - revive
+    - copyloopvar
+    - errorlint
+    - exhaustive
+    - gochecknoinits
+    - goconst
+    - godot
+    - sqlclosecheck
+    - wastedassign
+    - forcetypeassert
+  disable:
+    - errcheck
+    - gosec
+    - gochecknoglobals

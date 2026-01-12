@@ -1,0 +1,112 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-1.25-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-1.25-
+
+      - name: Run tests
+        run: go test -v -race ./...
+
+      - name: Build release artifacts
+        run: make release
+        env:
+          VERSION: ${{ github.ref_name }}
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get the previous tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          # Generate changelog
+          if [ -n "$PREV_TAG" ]; then
+            echo "## Changes since $PREV_TAG" > CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            git log --pretty=format:"- %s (%h)" $PREV_TAG..HEAD >> CHANGELOG.md
+          else
+            echo "## Initial Release" > CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "First release of ccbell - Sound notifications for Claude Code." >> CHANGELOG.md
+          fi
+
+          echo "" >> CHANGELOG.md
+          echo "## Installation" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "### Via Plugin Marketplace (Recommended)" >> CHANGELOG.md
+          echo '```' >> CHANGELOG.md
+          echo '/plugin marketplace add mpolatcan/cc-plugins' >> CHANGELOG.md
+          echo '/plugin install ccbell' >> CHANGELOG.md
+          echo '```' >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "### Manual Download" >> CHANGELOG.md
+          echo "Download the appropriate binary for your platform from the assets below." >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "| Platform | File |" >> CHANGELOG.md
+          echo "|----------|------|" >> CHANGELOG.md
+          echo "| macOS (Intel) | \`ccbell-darwin-amd64.tar.gz\` |" >> CHANGELOG.md
+          echo "| macOS (Apple Silicon) | \`ccbell-darwin-arm64.tar.gz\` |" >> CHANGELOG.md
+          echo "| Linux (x86_64) | \`ccbell-linux-amd64.tar.gz\` |" >> CHANGELOG.md
+          echo "| Linux (ARM64) | \`ccbell-linux-arm64.tar.gz\` |" >> CHANGELOG.md
+          echo "| Windows | \`ccbell-windows-amd64.zip\` |" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "## Checksums" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo '```' >> CHANGELOG.md
+          cat dist/checksums.txt >> CHANGELOG.md
+          echo '```' >> CHANGELOG.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}
+          files: |
+            dist/ccbell-darwin-amd64.tar.gz
+            dist/ccbell-darwin-arm64.tar.gz
+            dist/ccbell-linux-amd64.tar.gz
+            dist/ccbell-linux-arm64.tar.gz
+            dist/ccbell-windows-amd64.zip
+            dist/checksums.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ github.ref_name }}
+          path: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/checksums.txt
+          retention-days: 90

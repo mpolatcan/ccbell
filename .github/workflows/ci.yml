@@ -47,6 +47,12 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
+      - name: Install audio player (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg alsa-utils
+
       - name: Run tests
         run: |
           go test -v -race -coverprofile=coverage.out $(go list ./... | grep -v '/\.out$')

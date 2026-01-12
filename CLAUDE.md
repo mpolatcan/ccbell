@@ -8,34 +8,7 @@ Go-based CLI binary that provides audio notifications for Claude Code events.
 
 Plays sound notifications when Claude finishes responding, needs permission, is waiting for input, or when a subagent completes.
 
-## Architecture
-
-The `ccbell` repository builds and releases Go binaries via GitHub Actions.
-
-The `cc-plugins` repository distributes the plugin with:
-- `.claude-plugin/plugin.json` - Plugin manifest with commands and hooks
-- `sounds/*.aiff` - Audio files
-- `commands/*.md` - Slash command documentation
-- `scripts/ccbell.sh` - Downloads binary from GitHub releases on first use
-
-## Official Documentation (ALWAYS refer to these)
-
-Plugin schemas and hook events may change. Always consult the official documentation.
-
-| Documentation | URL |
-|--------------|-----|
-| **Plugins Reference** | https://code.claude.com/docs/en/plugins-reference |
-| **Hooks Reference** | https://code.claude.com/docs/en/hooks |
-
-### Key Sections
-
-- **Plugin Manifest** - https://code.claude.com/docs/en/plugins-reference#manifest
-- **Commands** - https://code.claude.com/docs/en/plugins-reference#commands
-- **Hooks** - https://code.claude.com/docs/en/plugins-reference#hooks
-- **Hook Events** - https://code.claude.com/docs/en/hooks#events
-- **Hook Types** - https://code.claude.com/docs/en/hooks#hook-types
-
-## Commands
+## Build Commands
 
 ```bash
 make build           # Build for current platform

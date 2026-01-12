@@ -64,18 +64,14 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           $allPackages = go list ./...
-          Write-Host "Raw packages: $allPackages"
           $packages = @()
           $allPackages | ForEach-Object {
-            $shouldInclude = $_ -notmatch '^\.' -and $_ -notmatch '\.out$'
-            Write-Host "Package: $_ Include: $shouldInclude"
-            if ($shouldInclude) {
+            if ($_ -notmatch '^\.' -and $_ -notmatch '\.out$') {
               $packages += $_
             }
           }
-          Write-Host "Final packages: $packages"
           foreach ($pkg in $packages) {
-            go test -v -race -coverprofile=coverage.txt $pkg
+            go test -v -race -coverprofile=coverage-windows.txt $pkg
           }
         shell: pwsh
 

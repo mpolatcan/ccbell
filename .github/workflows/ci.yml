@@ -65,7 +65,8 @@ jobs:
         run: |
           $packages = go list ./...
           foreach ($pkg in $packages) {
-            if ($pkg -match '^[^.]*\.out$') { continue }
+            if ($pkg -eq '.out') { continue }
+            if (Test-Path ".out") { Remove-Item -Recurse -Force ".out" -ErrorAction SilentlyContinue }
             go test -v -race -coverprofile=coverage.out $pkg
           }
         shell: pwsh

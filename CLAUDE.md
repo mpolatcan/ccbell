@@ -6,7 +6,7 @@ Go-based CLI binary that provides audio notifications for Claude Code events.
 
 ## Purpose
 
-Plays sound notifications when Claude finishes responding, needs permission, or when a subagent completes.
+Plays sound notifications when Claude finishes responding, needs permission, is waiting for input, or when a subagent completes.
 
 ## Build Commands
 
@@ -26,7 +26,7 @@ make check           # Run fmt, lint, test, and build
 ccbell <event_type>
 ```
 
-Event types: `stop`, `permission_prompt`, `subagent`
+Event types: `stop`, `permission_prompt`, `idle_prompt`, `subagent`
 
 ## Audio Backends
 

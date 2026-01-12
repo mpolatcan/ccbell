@@ -46,7 +46,6 @@ type Profile struct {
 var ValidEvents = map[string]bool{
 	"stop":              true,
 	"permission_prompt": true,
-	"idle_prompt":       true,
 	"subagent":          true,
 }
 
@@ -70,7 +69,6 @@ func Default() *Config {
 		Events: map[string]*Event{
 			"stop":              {Enabled: ptrBool(true), Sound: "bundled:stop", Volume: ptrFloat(0.5), Cooldown: ptrInt(0)},
 			"permission_prompt": {Enabled: ptrBool(true), Sound: "bundled:permission_prompt", Volume: ptrFloat(0.7), Cooldown: ptrInt(0)},
-			"idle_prompt":       {Enabled: ptrBool(true), Sound: "bundled:idle_prompt", Volume: ptrFloat(0.5), Cooldown: ptrInt(0)},
 			"subagent":          {Enabled: ptrBool(true), Sound: "bundled:subagent", Volume: ptrFloat(0.5), Cooldown: ptrInt(0)},
 		},
 	}

@@ -33,7 +33,6 @@ func TestPrintUsage(t *testing.T) {
 		"EVENT TYPES:",
 		"stop",
 		"permission_prompt",
-		"idle_prompt",
 		"subagent",
 		"OPTIONS:",
 		"--help",
@@ -404,7 +403,7 @@ func TestValidEventTypes(t *testing.T) {
 	os.Setenv("CLAUDE_PLUGIN_ROOT", tmpDir)
 
 	// Test all valid event types
-	validEvents := []string{"stop", "permission_prompt", "idle_prompt", "subagent"}
+	validEvents := []string{"stop", "permission_prompt", "subagent"}
 
 	for _, event := range validEvents {
 		t.Run(event, func(t *testing.T) {

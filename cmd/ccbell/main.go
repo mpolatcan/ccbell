@@ -1,7 +1,7 @@
 // ccbell - Sound notification hook for Claude Code
 //
 // Usage: ccbell <event_type>
-// Event types: stop, permission_prompt, idle_prompt, subagent
+// Event types: stop, permission_prompt, subagent
 package main
 
 import (
@@ -97,7 +97,7 @@ func run() error {
 	projectDir := os.Getenv("CLAUDE_PROJECT_DIR")
 	pluginRoot := os.Getenv("CLAUDE_PLUGIN_ROOT")
 	if pluginRoot == "" {
-		pluginRoot = homeDir + "/.claude/plugins/local/ccbell"
+		pluginRoot = homeDir + "/.claude/plugins/cache/cc-plugins/ccbell"
 	}
 
 	// === Load configuration ===
@@ -194,7 +194,6 @@ USAGE:
 EVENT TYPES:
     stop              Claude finished responding
     permission_prompt Claude needs your permission
-    idle_prompt       Claude is waiting for your input
     subagent          A background agent completed
 
 OPTIONS:
@@ -210,7 +209,6 @@ CONFIGURATION:
 SOUND FORMATS:
     bundled:stop         Bundled with plugin
     bundled:permission_prompt
-    bundled:idle_prompt
     bundled:subagent
     custom:/path/to.mp3  Custom audio file
 

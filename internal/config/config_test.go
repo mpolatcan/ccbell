@@ -14,7 +14,6 @@ func TestValidateEventType(t *testing.T) {
 	}{
 		{"valid stop", "stop", false},
 		{"valid permission_prompt", "permission_prompt", false},
-		{"valid idle_prompt", "idle_prompt", false},
 		{"valid subagent", "subagent", false},
 		{"invalid event", "invalid_event", true},
 		{"injection attempt", "stop; echo pwned", true},
@@ -132,7 +131,7 @@ func TestGetEventConfig(t *testing.T) {
 		Profiles: map[string]*Profile{
 			"work": {
 				Events: map[string]*Event{
-					"stop": {Sound: "bundled:idle_prompt", Volume: ptrFloat(0.3)},
+					"stop": {Sound: "bundled:subagent", Volume: ptrFloat(0.3)},
 				},
 			},
 			"silent": {
@@ -145,8 +144,8 @@ func TestGetEventConfig(t *testing.T) {
 
 	t.Run("profile overrides base config", func(t *testing.T) {
 		eventCfg := cfg.GetEventConfig("stop")
-		if eventCfg.Sound != "bundled:idle_prompt" {
-			t.Errorf("expected sound 'bundled:idle_prompt', got '%s'", eventCfg.Sound)
+		if eventCfg.Sound != "bundled:subagent" {
+			t.Errorf("expected sound 'bundled:subagent', got '%s'", eventCfg.Sound)
 		}
 		if *eventCfg.Volume != 0.3 {
 			t.Errorf("expected volume 0.3, got %f", *eventCfg.Volume)

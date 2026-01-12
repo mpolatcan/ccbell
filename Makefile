@@ -84,15 +84,15 @@ clean:
 # Install to plugin directory
 install: build
 	@echo "$(BLUE)Installing to plugin directory...$(RESET)"
-	@mkdir -p $(HOME)/.claude/plugins/local/ccbell/bin
-	cp $(BUILD_DIR)/$(BINARY_NAME) $(HOME)/.claude/plugins/local/ccbell/bin/
-	chmod +x $(HOME)/.claude/plugins/local/ccbell/bin/$(BINARY_NAME)
-	@echo "$(GREEN)✓ Installed to ~/.claude/plugins/local/ccbell/bin/$(BINARY_NAME)$(RESET)"
+	@mkdir -p $(HOME)/.claude/plugins/cache/cc-plugins/ccbell/bin
+	cp $(BUILD_DIR)/$(BINARY_NAME) $(HOME)/.claude/plugins/cache/cc-plugins/ccbell/bin/
+	chmod +x $(HOME)/.claude/plugins/cache/cc-plugins/ccbell/bin/$(BINARY_NAME)
+	@echo "$(GREEN)✓ Installed to ~/.claude/plugins/cache/cc-plugins/ccbell/bin/$(BINARY_NAME)$(RESET)"
 
 # Uninstall from plugin directory
 uninstall:
 	@echo "$(BLUE)Uninstalling...$(RESET)"
-	rm -f $(HOME)/.claude/plugins/local/ccbell/bin/$(BINARY_NAME)
+	rm -f $(HOME)/.claude/plugins/cache/cc-plugins/ccbell/bin/$(BINARY_NAME)
 	@echo "$(GREEN)✓ Uninstalled$(RESET)"
 
 # Build for all platforms
@@ -174,7 +174,7 @@ help:
 	@echo "  lint       Run linter (golangci-lint or go vet)"
 	@echo "  fmt        Format code"
 	@echo "  clean      Remove build artifacts"
-	@echo "  install    Install to ~/.claude/plugins/local/ccbell/bin/"
+	@echo "  install    Install to ~/.claude/plugins/cache/cc-plugins/ccbell/bin/"
 	@echo "  uninstall  Remove from plugin directory"
 	@echo "  dist       Build for all platforms"
 	@echo "  checksums  Generate SHA256 checksums"

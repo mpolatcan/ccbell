@@ -1,3 +1,3 @@
 module github.com/mpolatcan/ccbell
 
-go 1.25
+go 1.25.5

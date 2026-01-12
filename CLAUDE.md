@@ -41,7 +41,25 @@ The `ccbell` repository builds and releases Go binaries via GitHub Actions.
 - **Plugin Manifest** - See [Plugins Reference: Manifest](https://code.claude.com/docs/en/plugins-reference#manifest)
 - **Commands** - See [Plugins Reference: Commands](https://code.claude.com/docs/en/plugins-reference#commands)
 - **Hooks** - See [Hooks Reference](https://code.claude.com/docs/en/hooks) and [Plugins Reference: Hooks](https://code.claude.com/docs/en/plugins-reference#hooks)
-- **Events** - See [Hooks Reference: Events](https://code.claude.com/docs/en/hooks#events)
+
+### Hooks Documentation (ALWAYS refer to these)
+
+**Main Hooks Documentation:**
+- **Hooks Reference** - https://code.claude.com/docs/en/hooks
+  - **Events** - https://code.claude.com/docs/en/hooks#events (Stop, PermissionPrompt, Notification, UserPromptSubmit, SubagentStop, etc.)
+  - **Hook Types** - https://code.claude.com/docs/en/hooks#hook-types (command, agent, skill)
+  - **Matcher** - https://code.claude.com/docs/en/hooks#matcher
+  - **Timeout** - https://code.claude.com/docs/en/hooks#timeout
+
+**Related in Plugins Reference:**
+- **Hooks in Plugins** - https://code.claude.com/docs/en/plugins-reference#hooks
+
+**ALWAYS consult these pages for:**
+- Complete list of available hook events
+- Hook type specifications (command, agent, skill)
+- Matcher patterns and syntax
+- Timeout configuration
+- Input/output handling
 
 ### Hook Events Used
 

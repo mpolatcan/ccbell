@@ -19,13 +19,13 @@ ccbell (this repo)              cc-plugins (marketplace)
 │   ├── logger/    # Logging    │   ├── hooks/hooks.json
 │   └── state/     # Cooldown   │   ├── sounds/*.aiff
 ├── go.mod                      │   ├── commands/*.md
-└── Makefile                    └── scripts/install.sh
+└── Makefile                    └── scripts/ccbell.sh
 ```
 
 **Flow:**
 1. User installs plugin from cc-plugins marketplace
-2. `postinstall` script downloads binary from this repo's GitHub Releases
-3. Claude Code hooks call the binary for sound notifications
+2. `ccbell.sh` script downloads binary on first use from this repo's GitHub Releases
+3. Claude Code hooks call `ccbell.sh` for sound notifications
 
 ## Development
 

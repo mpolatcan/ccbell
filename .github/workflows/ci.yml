@@ -64,14 +64,9 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           $allPackages = go list ./...
-          $packages = @()
-          $allPackages | ForEach-Object {
-            if ($_ -notmatch '^\.' -and $_ -notmatch '\.out$') {
-              $packages += $_
-            }
-          }
+          $packages = $allPackages | Where-Object { $_ -notlike "*.*" }
           foreach ($pkg in $packages) {
-            go test -v -race -coverprofile=coverage-windows.txt $pkg
+            go test -v -race -coverprofile=coveragedata $pkg
           }
         shell: pwsh
 

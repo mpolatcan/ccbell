@@ -130,7 +130,9 @@ This triggers `.github/workflows/release.yml` which:
 
 ### Sync Version to cc-plugins Marketplace
 
-After tagging and pushing in the ccbell repository, you MUST also update the version in cc-plugins:
+**:warning: CRITICAL: Version must be synced between both repositories.**
+
+After tagging and pushing in the ccbell repository, you MUST also update the version in cc-plugins to the SAME version:
 
 ```bash
 cd ../cc-plugins/plugins/ccbell
@@ -144,25 +146,24 @@ echo "Current version: $CURRENT_VERSION"
 # For minor: NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print $1"."($2+1)".0"}')
 # For major: NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print ($1+1)".0.0"}')
 
-# Example: Set new version to v0.3.0 (adjust as needed)
-NEW_VERSION="0.3.0"
-
-# Step 3: Update version files
-sed -i '' "s/\"version\": *\"${CURRENT_VERSION}\"/\"version\": \"${NEW_VERSION}\"/" .claude-plugin/plugin.json
-sed -i '' "s/PLUGIN_VERSION=\"${CURRENT_VERSION}\"/PLUGIN_VERSION=\"${NEW_VERSION}\"/" scripts/ccbell.sh
+# Step 3: Update cc-plugins files (use SAME version as ccbell tag)
+sed -i '' "s/\"version\": *\"${CURRENT_VERSION}\"/\"version\": \"${CURRENT_VERSION}\"/" .claude-plugin/plugin.json
+sed -i '' "s/PLUGIN_VERSION=\"${CURRENT_VERSION}\"/PLUGIN_VERSION=\"${CURRENT_VERSION}\"/" scripts/ccbell.sh
 
 # Step 4: Commit and push
 git add .claude-plugin/plugin.json scripts/ccbell.sh
-git commit -m "chore(ccbell): sync version to v${NEW_VERSION}"
+git commit -m "chore(ccbell): sync version to v${CURRENT_VERSION}"
 git push
 ```
 
+**:no_entry_sign: NEVER skip version sync - both repositories must use the same version number.**
+
 **Release Checklist:**
-1. [ ] Tag and push in ccbell: `git tag v<version> && git push origin v<version>`
-2. [ ] Wait for GitHub Release to be created
-3. [ ] Get current version from cc-plugins plugins/ccbell/.claude-plugin/plugin.json
-4. [ ] Calculate/determine new version
-5. [ ] Update `plugin.json` and `ccbell.sh` with new version
+1. [ ] Make changes in ccbell
+2. [ ] Tag and push in ccbell: `git tag v<version> && git push origin v<version>`
+3. [ ] Wait for GitHub Release to be created
+4. [ ] Get version from ccbell tag (e.g., `v0.3.0`)
+5. [ ] Update `plugin.json` and `ccbell.sh` in cc-plugins to the SAME version
 6. [ ] Commit and push version sync in cc-plugins
 
 ## Configuration

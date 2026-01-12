@@ -63,10 +63,9 @@ jobs:
       - name: Run tests (Windows)
         if: runner.os == 'Windows'
         run: |
-          $packages = go list ./... | Where-Object { $_ -notmatch '/\.out$' }
+          $packages = go list ./... | Where-Object { $_ -notmatch '\.out$' }
           foreach ($pkg in $packages) { go test -v -race -coverprofile=coverage.out $pkg }
         shell: pwsh
-        continue-on-error: true
 
       - name: Upload coverage
         if: matrix.os == 'ubuntu-latest' && matrix.go-version == '1.25.5'

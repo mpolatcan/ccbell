@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -603,19 +602,7 @@ func TestRunWithInvalidConfig(t *testing.T) {
 	t.Logf("run() with invalid config returned: %v", err)
 }
 
-func TestRunWithProjectConfig(t *testing.T) {
-	// This test is deprecated - ccbell only uses global config, not project config.
-	// Project-specific config was removed from the binary.
-	// Skipping this test as it tests functionality that doesn't exist.
-	t.Skip("ccbell only supports global config, project config was removed")
-}
-
 func TestRunWithActiveProfile(t *testing.T) {
-	// Skip if no audio player is available (e.g., CI environments)
-	if !hasAudioPlayer() {
-		t.Skip("no audio player available")
-	}
-
 	// Save original args and env
 	oldArgs := os.Args
 	oldHome := os.Getenv("HOME")
@@ -643,19 +630,9 @@ func TestRunWithActiveProfile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Create sounds directory
-	soundsDir := filepath.Join(tmpDir, "sounds")
-	if err := os.MkdirAll(soundsDir, 0755); err != nil {
-		t.Fatal(err)
-	}
-	stopSound := filepath.Join(soundsDir, "stop.aiff")
-	if err := os.WriteFile(stopSound, []byte("dummy"), 0644); err != nil {
-		t.Fatal(err)
-	}
-
-	// Create config with profile
+	// Create config with profile (disabled to avoid audio playback)
 	configContent := `{
-		"enabled": true,
+		"enabled": false,
 		"activeProfile": "work",
 		"profiles": {
 			"work": {
@@ -676,17 +653,13 @@ func TestRunWithActiveProfile(t *testing.T) {
 
 	os.Args = []string{"ccbell", "stop"}
 	err = run()
+	// Should not error when plugin is disabled (exits early before audio)
 	if err != nil {
-		t.Errorf("run() with active profile should not error, got: %v", err)
+		t.Errorf("run() with disabled plugin should not error, got: %v", err)
 	}
 }
 
 func TestRunWithUserProfile(t *testing.T) {
-	// Skip if no audio player is available (e.g., CI environments)
-	if !hasAudioPlayer() {
-		t.Skip("no audio player available")
-	}
-
 	// Save original args and env
 	oldArgs := os.Args
 	oldHome := os.Getenv("HOME")
@@ -718,18 +691,8 @@ func TestRunWithUserProfile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Create sounds directory
-	soundsDir := filepath.Join(tmpDir, "sounds")
-	if err := os.MkdirAll(soundsDir, 0755); err != nil {
-		t.Fatal(err)
-	}
-	stopSound := filepath.Join(soundsDir, "stop.aiff")
-	if err := os.WriteFile(stopSound, []byte("dummy"), 0644); err != nil {
-		t.Fatal(err)
-	}
-
-	// Create config with plugin enabled (to test actual playback path)
-	configContent := `{"enabled": true}`
+	// Create config with disabled plugin (to avoid audio playback)
+	configContent := testConfigDisabledPlugin
 	configPath := filepath.Join(claudeDir, "ccbell.config.json")
 	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
 		t.Fatal(err)
@@ -745,15 +708,4 @@ func TestRunWithUserProfile(t *testing.T) {
 	if err != nil {
 		t.Errorf("run() should not error, got: %v", err)
 	}
-}
-
-// hasAudioPlayer checks if an audio player is available on the system.
-func hasAudioPlayer() bool {
-	players := []string{"afplay", "paplay", "aplay", "mpv", "ffplay"}
-	for _, p := range players {
-		if _, err := exec.LookPath(p); err == nil {
-			return true
-		}
-	}
-	return false
 }

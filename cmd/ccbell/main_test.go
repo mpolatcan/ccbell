@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -603,89 +604,25 @@ func TestRunWithInvalidConfig(t *testing.T) {
 }
 
 func TestRunWithProjectConfig(t *testing.T) {
-	// Save original args and env
-	oldArgs := os.Args
-	oldHome := os.Getenv("HOME")
-	oldProjectDir := os.Getenv("CLAUDE_PROJECT_DIR")
-	oldPluginRoot := os.Getenv("CLAUDE_PLUGIN_ROOT")
-	defer func() {
-		os.Args = oldArgs
-		os.Setenv("HOME", oldHome)
-		if oldProjectDir != "" {
-			os.Setenv("CLAUDE_PROJECT_DIR", oldProjectDir)
-		} else {
-			os.Unsetenv("CLAUDE_PROJECT_DIR")
-		}
-		if oldPluginRoot != "" {
-			os.Setenv("CLAUDE_PLUGIN_ROOT", oldPluginRoot)
-		} else {
-			os.Unsetenv("CLAUDE_PLUGIN_ROOT")
-		}
-	}()
-
-	// Create temp directories
-	tmpDir, err := os.MkdirTemp("", "ccbell-home-test")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(tmpDir)
-
-	projectDir, err := os.MkdirTemp("", "ccbell-project-test")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(projectDir)
-
-	// Create .claude directory in project
-	projectClaudeDir := filepath.Join(projectDir, ".claude")
-	if err := os.MkdirAll(projectClaudeDir, 0755); err != nil {
-		t.Fatal(err)
-	}
-
-	// Create project config (takes precedence)
-	configContent := testConfigDisabledPlugin
-	configPath := filepath.Join(projectClaudeDir, "ccbell.config.json")
-	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
-		t.Fatal(err)
-	}
-
-	// Create sounds directory for plugin root (required for audio playback)
-	soundsDir := filepath.Join(tmpDir, "sounds")
-	if err := os.MkdirAll(soundsDir, 0755); err != nil {
-		t.Fatal(err)
-	}
-	// Create bundled stop.aiff
-	stopSound := filepath.Join(soundsDir, "stop.aiff")
-	if err := os.WriteFile(stopSound, []byte("dummy"), 0644); err != nil {
-		t.Fatal(err)
-	}
-
-	// Set environment
-	os.Setenv("HOME", tmpDir)
-	os.Setenv("CLAUDE_PROJECT_DIR", projectDir)
-	os.Setenv("CLAUDE_PLUGIN_ROOT", tmpDir)
-
-	os.Args = []string{"ccbell", "stop"}
-	err = run()
-	if err != nil {
-		t.Errorf("run() with project config should not error, got: %v", err)
-	}
+	// This test is deprecated - ccbell only uses global config, not project config.
+	// Project-specific config was removed from the binary.
+	// Skipping this test as it tests functionality that doesn't exist.
+	t.Skip("ccbell only supports global config, project config was removed")
 }
 
 func TestRunWithActiveProfile(t *testing.T) {
+	// Skip if no audio player is available (e.g., CI environments)
+	if !hasAudioPlayer() {
+		t.Skip("no audio player available")
+	}
+
 	// Save original args and env
 	oldArgs := os.Args
 	oldHome := os.Getenv("HOME")
-	oldProjectDir := os.Getenv("CLAUDE_PROJECT_DIR")
 	oldPluginRoot := os.Getenv("CLAUDE_PLUGIN_ROOT")
 	defer func() {
 		os.Args = oldArgs
 		os.Setenv("HOME", oldHome)
-		if oldProjectDir != "" {
-			os.Setenv("CLAUDE_PROJECT_DIR", oldProjectDir)
-		} else {
-			os.Unsetenv("CLAUDE_PROJECT_DIR")
-		}
 		if oldPluginRoot != "" {
 			os.Setenv("CLAUDE_PLUGIN_ROOT", oldPluginRoot)
 		} else {
@@ -706,9 +643,19 @@ func TestRunWithActiveProfile(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// Create sounds directory
+	soundsDir := filepath.Join(tmpDir, "sounds")
+	if err := os.MkdirAll(soundsDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	stopSound := filepath.Join(soundsDir, "stop.aiff")
+	if err := os.WriteFile(stopSound, []byte("dummy"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
 	// Create config with profile
 	configContent := `{
-		"enabled": false,
+		"enabled": true,
 		"activeProfile": "work",
 		"profiles": {
 			"work": {
@@ -725,7 +672,6 @@ func TestRunWithActiveProfile(t *testing.T) {
 
 	// Set environment
 	os.Setenv("HOME", tmpDir)
-	os.Unsetenv("CLAUDE_PROJECT_DIR")
 	os.Setenv("CLAUDE_PLUGIN_ROOT", tmpDir)
 
 	os.Args = []string{"ccbell", "stop"}
@@ -736,11 +682,14 @@ func TestRunWithActiveProfile(t *testing.T) {
 }
 
 func TestRunWithUserProfile(t *testing.T) {
+	// Skip if no audio player is available (e.g., CI environments)
+	if !hasAudioPlayer() {
+		t.Skip("no audio player available")
+	}
+
 	// Save original args and env
 	oldArgs := os.Args
 	oldHome := os.Getenv("HOME")
-	oldUserProfile := os.Getenv("USERPROFILE")
-	oldProjectDir := os.Getenv("CLAUDE_PROJECT_DIR")
 	oldPluginRoot := os.Getenv("CLAUDE_PLUGIN_ROOT")
 	defer func() {
 		os.Args = oldArgs
@@ -748,16 +697,6 @@ func TestRunWithUserProfile(t *testing.T) {
 			os.Setenv("HOME", oldHome)
 		} else {
 			os.Unsetenv("HOME")
-		}
-		if oldUserProfile != "" {
-			os.Setenv("USERPROFILE", oldUserProfile)
-		} else {
-			os.Unsetenv("USERPROFILE")
-		}
-		if oldProjectDir != "" {
-			os.Setenv("CLAUDE_PROJECT_DIR", oldProjectDir)
-		} else {
-			os.Unsetenv("CLAUDE_PROJECT_DIR")
 		}
 		if oldPluginRoot != "" {
 			os.Setenv("CLAUDE_PLUGIN_ROOT", oldPluginRoot)
@@ -779,8 +718,18 @@ func TestRunWithUserProfile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Create config with plugin disabled
-	configContent := testConfigDisabledPlugin
+	// Create sounds directory
+	soundsDir := filepath.Join(tmpDir, "sounds")
+	if err := os.MkdirAll(soundsDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	stopSound := filepath.Join(soundsDir, "stop.aiff")
+	if err := os.WriteFile(stopSound, []byte("dummy"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create config with plugin enabled (to test actual playback path)
+	configContent := `{"enabled": true}`
 	configPath := filepath.Join(claudeDir, "ccbell.config.json")
 	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
 		t.Fatal(err)
@@ -789,12 +738,22 @@ func TestRunWithUserProfile(t *testing.T) {
 	// Set environment - use temp dir for HOME
 	os.Unsetenv("HOME")
 	os.Setenv("HOME", tmpDir)
-	os.Unsetenv("CLAUDE_PROJECT_DIR")
 	os.Setenv("CLAUDE_PLUGIN_ROOT", tmpDir)
 
 	os.Args = []string{"ccbell", "stop"}
 	err = run()
 	if err != nil {
-		t.Errorf("run() with USERPROFILE should not error, got: %v", err)
+		t.Errorf("run() should not error, got: %v", err)
 	}
+}
+
+// hasAudioPlayer checks if an audio player is available on the system.
+func hasAudioPlayer() bool {
+	players := []string{"afplay", "paplay", "aplay", "mpv", "ffplay"}
+	for _, p := range players {
+		if _, err := exec.LookPath(p); err == nil {
+			return true
+		}
+	}
+	return false
 }

@@ -63,9 +63,15 @@ jobs:
       - name: Run tests (Windows)
         if: runner.os == 'Windows'
         run: |
-          $allPackages = go list ./...
-          $packages = $allPackages | Where-Object { $_ -notmatch '^\.' -and $_ -notmatch '\\.out$' }
-          go test -v -race -coverprofile=coverage.txt $packages
+          $packages = @()
+          go list ./... | ForEach-Object {
+            if ($_ -notmatch '^\.' -and $_ -notmatch '\.out$') {
+              $packages += $_
+            }
+          }
+          foreach ($pkg in $packages) {
+            go test -v -race -coverprofile=coverage.txt $pkg
+          }
         shell: pwsh
 
       - name: Upload coverage

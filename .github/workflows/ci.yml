@@ -63,12 +63,8 @@ jobs:
       - name: Run tests (Windows)
         if: runner.os == 'Windows'
         run: |
-          $packages = go list ./...
-          foreach ($pkg in $packages) {
-            if ($pkg -eq '.out') { continue }
-            if (Test-Path ".out") { Remove-Item -Recurse -Force ".out" -ErrorAction SilentlyContinue }
-            go test -v -race -coverprofile=coverage.out $pkg
-          }
+          $packages = (go list ./...) -replace '\.out$','' -replace '\.out[/\\]',''
+          if ($packages) { go test -v -race -coverprofile=coverage.out $packages }
         shell: pwsh
 
       - name: Upload coverage

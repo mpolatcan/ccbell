@@ -94,14 +94,13 @@ func run() error {
 	if homeDir == "" {
 		homeDir = os.Getenv("USERPROFILE") // Windows fallback
 	}
-	projectDir := os.Getenv("CLAUDE_PROJECT_DIR")
 	pluginRoot := os.Getenv("CLAUDE_PLUGIN_ROOT")
 	if pluginRoot == "" {
 		pluginRoot = homeDir + "/.claude/plugins/cache/cc-plugins/ccbell"
 	}
 
 	// === Load configuration ===
-	cfg, configPath, configErr := config.Load(projectDir, homeDir, pluginRoot)
+	cfg, configPath, configErr := config.Load("", homeDir, pluginRoot)
 	if configErr != nil {
 		// Config error shouldn't be fatal - use defaults
 		cfg = config.Default()
@@ -202,10 +201,7 @@ OPTIONS:
     -v, --version     Show version information
 
 CONFIGURATION:
-    Project config:  .claude/ccbell.config.json
-    Global config:   ~/.claude/ccbell.config.json
-
-    Project config takes precedence over global config.
+    Global config:  ~/.claude/ccbell.config.json
 
 SOUND FORMATS:
     bundled:stop         Bundled with plugin
@@ -215,7 +211,6 @@ SOUND FORMATS:
     custom:/path/to.mp3  Custom audio file
 
 ENVIRONMENT:
-    CLAUDE_PROJECT_DIR   Project directory (for config lookup)
     CLAUDE_PLUGIN_ROOT   Plugin installation directory
 
 For more information, visit: https://github.com/mpolatcan/ccbell`)

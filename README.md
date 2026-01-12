@@ -132,7 +132,6 @@ This triggers `.github/workflows/release.yml` which:
 ## Configuration
 
 The binary reads configuration from:
-- **Project:** `.claude/ccbell.config.json`
 - **Global:** `~/.claude/ccbell.config.json`
 
 See the [plugin README](https://github.com/mpolatcan/cc-plugins/tree/main/plugins/ccbell) for configuration options.

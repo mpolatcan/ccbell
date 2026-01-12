@@ -77,25 +77,13 @@ func Default() *Config {
 }
 
 // Load reads configuration from file, falling back to defaults.
-// It checks project-level config first, then global config.
-// Note: pluginRoot is reserved for future use (e.g., loading bundled sounds).
-func Load(projectDir, homeDir, _ string) (*Config, string, error) {
+// It only checks the global config at ~/.claude/ccbell.config.json.
+func Load(_, homeDir, _ string) (*Config, string, error) {
 	cfg := Default()
 	configPath := ""
 
-	// Try project-level config first
-	if projectDir != "" {
-		projectConfig := filepath.Join(projectDir, ".claude", "ccbell.config.json")
-		if data, err := os.ReadFile(projectConfig); err == nil {
-			if err := json.Unmarshal(data, cfg); err != nil {
-				return nil, "", fmt.Errorf("invalid JSON in %s: %w", projectConfig, err)
-			}
-			configPath = projectConfig
-		}
-	}
-
-	// Fall back to global config
-	if configPath == "" && homeDir != "" {
+	// Load global config
+	if homeDir != "" {
 		globalConfig := filepath.Join(homeDir, ".claude", "ccbell.config.json")
 		if data, err := os.ReadFile(globalConfig); err == nil {
 			if err := json.Unmarshal(data, cfg); err != nil {

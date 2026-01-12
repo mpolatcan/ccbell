@@ -1,7 +1,7 @@
 // ccbell - Sound notification hook for Claude Code
 //
 // Usage: ccbell <event_type>
-// Event types: stop, permission_prompt, subagent
+// Event types: stop, permission_prompt, idle_prompt, subagent
 package main
 
 import (
@@ -194,6 +194,7 @@ USAGE:
 EVENT TYPES:
     stop              Claude finished responding
     permission_prompt Claude needs your permission
+    idle_prompt       Claude is waiting for input
     subagent          A background agent completed
 
 OPTIONS:
@@ -209,6 +210,7 @@ CONFIGURATION:
 SOUND FORMATS:
     bundled:stop         Bundled with plugin
     bundled:permission_prompt
+    bundled:idle_prompt
     bundled:subagent
     custom:/path/to.mp3  Custom audio file
 

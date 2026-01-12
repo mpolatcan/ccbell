@@ -78,7 +78,12 @@ func Default() *Config {
 
 // Load reads configuration from file, falling back to defaults.
 // It only checks the global config at ~/.claude/ccbell.config.json.
-func Load(_, homeDir, _ string) (*Config, string, error) {
+// The projectDir parameter is unused (project-level config is not supported).
+// The pluginRoot parameter is unused (config is always global).
+func Load(projectDir, homeDir string, pluginRoot string) (*Config, string, error) {
+	_ = projectDir // Project-level config not supported
+	_ = pluginRoot // Config is always global
+
 	cfg := Default()
 	configPath := ""
 

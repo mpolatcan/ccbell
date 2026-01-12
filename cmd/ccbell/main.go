@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/mpolatcan/ccbell/internal/audio"
 	"github.com/mpolatcan/ccbell/internal/config"
@@ -42,6 +44,59 @@ var (
 	commit    = "unknown"
 	buildDate = "unknown"
 )
+
+// findPluginRoot searches for the ccbell plugin in the plugins cache directory.
+// It supports any marketplace path by scanning for directories named "ccbell".
+func findPluginRoot(homeDir string) string {
+	cacheDir := filepath.Join(homeDir, ".claude", "plugins", "cache")
+	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
+		return ""
+	}
+
+	// Find the ccbell plugin directory in any marketplace subdirectory
+	var ccbellPath string
+	filepath.Walk(cacheDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return nil // Skip entries with errors
+		}
+		if info.IsDir() && path != cacheDir {
+			// Check if this is a ccbell directory
+			if info.Name() == "ccbell" {
+				ccbellPath = path
+				return filepath.SkipDir // Found it, stop walking
+			}
+		}
+		return nil
+	})
+
+	if ccbellPath == "" {
+		return ""
+	}
+
+	// Find the latest version subdirectory
+	var latestVersion string
+	filepath.Walk(ccbellPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return nil
+		}
+		if info.IsDir() && path != ccbellPath {
+			// Check if it's a version directory (starts with v or just numbers)
+			name := info.Name()
+			if strings.HasPrefix(name, "v") || strings.HasPrefix(name, "0") {
+				// This is likely a version directory
+				if latestVersion == "" || name > latestVersion {
+					latestVersion = name
+				}
+			}
+		}
+		return nil
+	})
+
+	if latestVersion != "" {
+		return filepath.Join(ccbellPath, latestVersion)
+	}
+	return ccbellPath
+}
 
 func main() {
 	// Recover from panics to prevent crashes
@@ -92,7 +147,7 @@ func run() error {
 	homeDir := os.Getenv("HOME")
 	pluginRoot := os.Getenv("CLAUDE_PLUGIN_ROOT")
 	if pluginRoot == "" {
-		pluginRoot = homeDir + "/.claude/plugins/cache/cc-plugins/ccbell"
+		pluginRoot = findPluginRoot(homeDir)
 	}
 
 	// === Load configuration ===

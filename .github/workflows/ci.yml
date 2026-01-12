@@ -32,7 +32,7 @@ jobs:
       - name: Remove .out directory (Windows)
         if: runner.os == 'Windows'
         run: |
-          if (Test-Path ".out") { Remove-Item -Recurse -Force ".out" }
+          if (Test-Path ".out") { Remove-Item -Recurse -Force ".out" -ErrorAction Stop } else { Write-Host ".out does not exist" }
           if (Test-Path "coverage.out") { Remove-Item "coverage.out" }
         shell: pwsh
 
@@ -55,7 +55,7 @@ jobs:
         run: go mod download
 
       - name: Run tests
-        run: go test -v -race -coverprofile=coverage.out ./...
+        run: go test -v -race -coverprofile=coverage.out $(go list ./... | grep -v '/\.out$')
 
       - name: Upload coverage
         if: matrix.os == 'ubuntu-latest' && matrix.go-version == '1.25.5'

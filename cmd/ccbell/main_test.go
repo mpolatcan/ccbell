@@ -775,9 +775,9 @@ func TestRunWithUserProfile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Set environment - use USERPROFILE instead of HOME (Windows-like)
+	// Set environment - use temp dir for HOME
 	os.Unsetenv("HOME")
-	os.Setenv("USERPROFILE", tmpDir)
+	os.Setenv("HOME", tmpDir)
 	os.Unsetenv("CLAUDE_PROJECT_DIR")
 	os.Setenv("CLAUDE_PLUGIN_ROOT", tmpDir)
 

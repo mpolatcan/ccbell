@@ -83,17 +83,13 @@ func run() error {
 
 	// === Drain stdin (hooks may send data) ===
 	// Non-blocking read to prevent hanging. The stdin is drained in a separate
-	// goroutine since this is a short-lived process - the goroutine will be
-	// terminated when the process exits (cmd.Start() for non-Windows).
+	// goroutine since this is a short-lived process.
 	go func() {
 		_, _ = io.Copy(io.Discard, os.Stdin)
 	}()
 
 	// === Environment setup ===
 	homeDir := os.Getenv("HOME")
-	if homeDir == "" {
-		homeDir = os.Getenv("USERPROFILE") // Windows fallback
-	}
 	pluginRoot := os.Getenv("CLAUDE_PLUGIN_ROOT")
 	if pluginRoot == "" {
 		pluginRoot = homeDir + "/.claude/plugins/cache/cc-plugins/ccbell"

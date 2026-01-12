@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
 	"time"
 )
@@ -30,12 +29,7 @@ func TestNewManager(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := NewManager(tt.homeDir)
-			// Normalize path separators for Windows compatibility
-			gotPath := m.filePath
-			if runtime.GOOS == "windows" {
-				gotPath = filepath.ToSlash(gotPath)
-			}
-			if gotPath != tt.wantPath {
+			if m.filePath != tt.wantPath {
 				t.Errorf("filePath = %v, want %v", m.filePath, tt.wantPath)
 			}
 		})
@@ -278,14 +272,12 @@ func TestManager_AtomicSave(t *testing.T) {
 		t.Error("stop event should have timestamp")
 	}
 
-	// Verify file permissions (skip on Windows - different permission model)
-	if runtime.GOOS != "windows" {
-		info, err := os.Stat(m.filePath)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if info.Mode().Perm() != FileMode {
-			t.Errorf("file mode = %v, want %v", info.Mode().Perm(), FileMode)
-		}
+	// Verify file permissions
+	info, err := os.Stat(m.filePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.Mode().Perm() != FileMode {
+		t.Errorf("file mode = %v, want %v", info.Mode().Perm(), FileMode)
 	}
 }

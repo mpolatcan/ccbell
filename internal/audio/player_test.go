@@ -2,6 +2,7 @@ package audio
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -532,16 +533,31 @@ func TestPlayLinuxNoPlayer(t *testing.T) {
 
 	player := NewPlayer("")
 
+	// Check if any audio player is available
+	hasPlayer := false
+	for _, p := range linuxAudioPlayerNames {
+		if _, err := exec.LookPath(p); err == nil {
+			hasPlayer = true
+			break
+		}
+	}
+
 	// Mock: if no player is available, should return error
 	// This test verifies the error message
 	err := player.playLinux("/nonexistent.aiff", 0.5)
-	if err == nil {
-		t.Error("playLinux with no player should return error")
-		return
-	}
-	expectedMsg := "no audio player found"
-	if !contains(err.Error(), expectedMsg) {
-		t.Errorf("error message should contain %q, got %q", expectedMsg, err.Error())
+	if hasPlayer {
+		// Player available - playLinux may succeed or fail depending on player
+		t.Logf("Audio player available, playLinux result: %v", err)
+	} else {
+		// No player - should return error
+		if err == nil {
+			t.Error("playLinux with no player should return error")
+			return
+		}
+		expectedMsg := "no audio player found"
+		if !contains(err.Error(), expectedMsg) {
+			t.Errorf("error message should contain %q, got %q", expectedMsg, err.Error())
+		}
 	}
 }
 

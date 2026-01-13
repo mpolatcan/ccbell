@@ -1,14 +1,14 @@
-# ccbell
+# ccbell :bell:
 
 Go-based CLI binary that provides audio notifications for Claude Code events.
 
-**GitHub:** mpolatcan/ccbell
+**:octocat: GitHub:** mpolatcan/ccbell
 
-## Purpose
+## Purpose :rocket:
 
 Plays sound notifications when Claude finishes responding, needs permission, is waiting for input, or when a subagent completes.
 
-## Build Commands
+## Build Commands :hammer:
 
 ```bash
 make build           # Build for current platform
@@ -28,7 +28,7 @@ make sync-version    # Sync version to cc-plugins marketplace
 make version         # Show version information
 ```
 
-## Usage
+## Usage :speaker:
 
 ```bash
 ccbell <event_type>
@@ -36,24 +36,24 @@ ccbell <event_type>
 
 Event types: `stop`, `permission_prompt`, `idle_prompt`, `subagent`
 
-## Audio Backends
+## Audio Backends :computer:
 
 | Platform | Backend |
 |----------|---------|
 | macOS | `afplay` (built-in) |
 | Linux | `paplay`, `aplay`, `mpv`, or `ffplay` |
 
-## Release Process
+## Release Process :rotating_light:
 
-**CRITICAL: Follow these steps in order. DO NOT SKIP any step.**
+:warning: **CRITICAL: Follow these steps in order. DO NOT SKIP any step.** :warning:
 
-### Step 1: Run Local Checks
+### Step 1: Run Local Checks :white_check_mark:
 ```bash
 make check
 ```
 This runs `fmt`, `lint`, `test`, and `build`. Wait for all checks to pass.
 
-### Step 2: Verify CI Pipeline Passed
+### Step 2: Verify CI Pipeline Passed :mag:
 
 Use `gh` CLI to check the latest workflow run:
 
@@ -66,34 +66,34 @@ gh run view $(gh run list --workflow=ci.yml --limit 1 --json databaseId --jq '.d
 ```
 
 - Confirm `status: "COMPLETED"` and `conclusion: "SUCCESS"`
-- **DO NOT PROCEED if CI failed** - fix issues first
+- :no_entry: **DO NOT PROCEED if CI failed** - fix issues first :no_entry:
 
 Or view in browser:
 https://github.com/mpolatcan/ccbell/actions/workflows/ci.yml
 
-### Step 3: Create Git Tag
+### Step 3: Create Git Tag :label:
 ```bash
 git tag vX.Y.Z
 ```
 Replace `X.Y.Z` with the new version number.
 
-### Step 4: Push Tag
+### Step 4: Push Tag :arrow_up:
 ```bash
 git push origin vX.Y.Z
 ```
 
-### Step 5: Wait for GitHub Release
+### Step 5: Wait for GitHub Release :hourglass_flowing_sand:
 - GitHub Actions will automatically build and create the release
 - Monitor: https://github.com/mpolatcan/ccbell/releases
 - Wait for the release asset to be uploaded
 
-### Step 6: Sync Version to cc-plugins
+### Step 6: Sync Version to cc-plugins :arrows_counterclockwise:
 ```bash
 cd ../ccbell
 make sync-version VERSION=vX.Y.Z
 ```
 
-### Step 7: Commit and Push cc-plugins
+### Step 7: Commit and Push cc-plugins :package:
 ```bash
 cd ../cc-plugins
 git add plugins/ccbell/.claude-plugin/plugin.json plugins/ccbell/scripts/ccbell.sh

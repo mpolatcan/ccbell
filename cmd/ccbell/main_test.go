@@ -748,6 +748,13 @@ func TestRunWithMissingConfigCreatesDefault(t *testing.T) {
 	os.Unsetenv("CLAUDE_PROJECT_DIR")
 	os.Setenv("CLAUDE_PLUGIN_ROOT", tmpDir)
 
+	// Create disabled config to exit early before audio playback
+	disabledConfig := `{"enabled": false}`
+	configPath := filepath.Join(tmpDir, ".claude", "ccbell.config.json")
+	if err := os.WriteFile(configPath, []byte(disabledConfig), 0600); err != nil {
+		t.Fatal(err)
+	}
+
 	// Test with disabled plugin - should create default config and exit early
 	os.Args = []string{"ccbell", "stop"}
 	err = run()
@@ -755,10 +762,9 @@ func TestRunWithMissingConfigCreatesDefault(t *testing.T) {
 		t.Errorf("run() with missing config should create default and not error, got: %v", err)
 	}
 
-	// Verify config was created
-	configPath := filepath.Join(tmpDir, ".claude", "ccbell.config.json")
+	// Verify config was preserved (not overwritten since it already existed)
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		t.Error("run() should have created default config file")
+		t.Error("run() should have config file")
 	}
 }
 

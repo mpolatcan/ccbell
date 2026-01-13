@@ -525,6 +525,10 @@ func TestPlayMacOSNonBlocking(t *testing.T) {
 }
 
 func TestPlayLinuxNoPlayer(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("this test is only for Linux")
+	}
+
 	player := NewPlayer("")
 
 	// Mock: if no player is available, should return error
@@ -532,6 +536,7 @@ func TestPlayLinuxNoPlayer(t *testing.T) {
 	err := player.playLinux("/nonexistent.aiff", 0.5)
 	if err == nil {
 		t.Error("playLinux with no player should return error")
+		return
 	}
 	expectedMsg := "no audio player found"
 	if !contains(err.Error(), expectedMsg) {

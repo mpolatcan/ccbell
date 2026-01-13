@@ -644,3 +644,116 @@ func containsHelper(s, substr string) bool {
 	}
 	return false
 }
+
+func TestPlayLinuxWithPlayer(t *testing.T) {
+	if runtime.GOOS != linuxOS {
+		t.Skip("this test is only for Linux")
+	}
+
+	// Create temp sound file
+	tempDir, err := os.MkdirTemp("", "ccbell-linux-play-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	soundFile := filepath.Join(tempDir, "test.aiff")
+	if err := os.WriteFile(soundFile, []byte("dummy"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	player := NewPlayer("")
+
+	// Try to play - will succeed if any audio player is installed
+	err = player.playLinux(soundFile, 0.5)
+	// Either succeeds (player found) or fails (no player) - both are valid
+	t.Logf("playLinux result: err=%v", err)
+}
+
+func TestHasAudioPlayerMacOS(t *testing.T) {
+	if runtime.GOOS != darwinOS {
+		t.Skip("this test is only for macOS")
+	}
+
+	player := NewPlayer("")
+	hasPlayer := player.HasAudioPlayer()
+
+	if !hasPlayer {
+		t.Error("HasAudioPlayer should return true on macOS with afplay")
+	}
+}
+
+func TestHasAudioPlayerLinuxNoPlayer(t *testing.T) {
+	if runtime.GOOS != linuxOS {
+		t.Skip("this test is only for Linux")
+	}
+
+	// Test with a mock that has no players available
+	player := &Player{platform: PlatformLinux, pluginRoot: ""}
+	hasPlayer := player.HasAudioPlayer()
+
+	// May be true or false depending on system, just log it
+	t.Logf("HasAudioPlayer on Linux: %v", hasPlayer)
+}
+
+func TestHasAudioPlayerUnknown(t *testing.T) {
+	player := &Player{platform: PlatformUnknown, pluginRoot: ""}
+	hasPlayer := player.HasAudioPlayer()
+
+	if hasPlayer {
+		t.Error("HasAudioPlayer should return false for unknown platform")
+	}
+}
+
+func TestInstallAudioPlayerWithMock(t *testing.T) {
+	// This tests the error path when player is unknown
+	err := installAudioPlayer("totally_fake_player_xyz")
+	if err == nil {
+		t.Error("installAudioPlayer with unknown player should return error")
+	}
+}
+
+func TestEnsureAudioPlayerWithExisting(t *testing.T) {
+	if runtime.GOOS != linuxOS {
+		t.Skip("this test is only for Linux")
+	}
+
+	player := NewPlayer("")
+	playerName, err := player.EnsureAudioPlayer()
+
+	// On Linux CI, likely no player is installed
+	// Test should not panic regardless of result
+	t.Logf("EnsureAudioPlayer: name=%q, err=%v", playerName, err)
+}
+
+func TestDetectPlatformUnknown(t *testing.T) {
+	// Test PlatformUnknown by creating a player with unknown platform
+	player := &Player{platform: PlatformUnknown, pluginRoot: ""}
+	if player.Platform() != PlatformUnknown {
+		t.Errorf("expected PlatformUnknown, got %s", player.Platform())
+	}
+}
+
+func TestPlayWithValidLinuxPlayer(t *testing.T) {
+	if runtime.GOOS != linuxOS {
+		t.Skip("this test is only for Linux")
+	}
+
+	// Create temp sound file
+	tempDir, err := os.MkdirTemp("", "ccbell-valid-player-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	soundFile := filepath.Join(tempDir, "test.aiff")
+	if err := os.WriteFile(soundFile, []byte("dummy"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	player := NewPlayer("")
+
+	// Try to play - may succeed if a player like aplay is available
+	err = player.Play(soundFile, 0.5)
+	t.Logf("Play with valid file: err=%v", err)
+}

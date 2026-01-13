@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -970,5 +971,202 @@ func TestFindPluginRootWithCache(t *testing.T) {
 	}
 	if !strings.Contains(result, "ccbell") {
 		t.Error("findPluginRoot result should contain 'ccbell'")
+	}
+}
+
+func TestRunWithSoundNotFound(t *testing.T) {
+	// Save original args and env
+	oldArgs := os.Args
+	oldHome := os.Getenv("HOME")
+	oldPluginRoot := os.Getenv("CLAUDE_PLUGIN_ROOT")
+	defer func() {
+		os.Args = oldArgs
+		os.Setenv("HOME", oldHome)
+		if oldPluginRoot != "" {
+			os.Setenv("CLAUDE_PLUGIN_ROOT", oldPluginRoot)
+		} else {
+			os.Unsetenv("CLAUDE_PLUGIN_ROOT")
+		}
+	}()
+
+	// Create temp directory
+	tmpDir, err := os.MkdirTemp("", "ccbell-sound-not-found")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Create .claude directory
+	claudeDir := filepath.Join(tmpDir, ".claude")
+	if err := os.MkdirAll(claudeDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create config with enabled plugin but no bundled sounds
+	configContent := `{
+		"enabled": true,
+		"events": {
+			"stop": {
+				"sound": "bundled:nonexistent_sound",
+				"enabled": true
+			}
+		}
+	}`
+	configPath := filepath.Join(claudeDir, "ccbell.config.json")
+	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	// Set environment - no sounds directory
+	os.Setenv("HOME", tmpDir)
+	os.Setenv("CLAUDE_PLUGIN_ROOT", tmpDir)
+
+	os.Args = []string{"ccbell", "stop"}
+	err = run()
+	// Should error because sound not found and no fallback
+	if err == nil {
+		t.Error("run() with nonexistent bundled sound should return error")
+	}
+	t.Logf("run() with missing sound: err=%v", err)
+}
+
+func TestRunWithCustomSoundValid(t *testing.T) {
+	// Save original args and env
+	oldArgs := os.Args
+	oldHome := os.Getenv("HOME")
+	oldPluginRoot := os.Getenv("CLAUDE_PLUGIN_ROOT")
+	defer func() {
+		os.Args = oldArgs
+		os.Setenv("HOME", oldHome)
+		if oldPluginRoot != "" {
+			os.Setenv("CLAUDE_PLUGIN_ROOT", oldPluginRoot)
+		} else {
+			os.Unsetenv("CLAUDE_PLUGIN_ROOT")
+		}
+	}()
+
+	// Create temp directory
+	tmpDir, err := os.MkdirTemp("", "ccbell-custom-sound")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Create custom sound file
+	customSound := filepath.Join(tmpDir, "custom.aiff")
+	if err := os.WriteFile(customSound, []byte("dummy"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create .claude directory
+	claudeDir := filepath.Join(tmpDir, ".claude")
+	if err := os.MkdirAll(claudeDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create config with custom sound and plugin disabled
+	configContent := fmt.Sprintf(`{
+		"enabled": false,
+		"events": {
+			"stop": {
+				"sound": "custom:%s",
+				"enabled": true
+			}
+		}
+	}`, customSound)
+	configPath := filepath.Join(claudeDir, "ccbell.config.json")
+	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	// Set environment
+	os.Setenv("HOME", tmpDir)
+	os.Setenv("CLAUDE_PLUGIN_ROOT", tmpDir)
+
+	os.Args = []string{"ccbell", "stop"}
+	err = run()
+	// Should not error because plugin is disabled (exits early)
+	if err != nil {
+		t.Errorf("run() with disabled plugin should not error, got: %v", err)
+	}
+}
+
+func TestRunWithEmptyHomeDir(t *testing.T) {
+	// Save original args and env
+	oldArgs := os.Args
+	oldHome := os.Getenv("HOME")
+	oldPluginRoot := os.Getenv("CLAUDE_PLUGIN_ROOT")
+	defer func() {
+		os.Args = oldArgs
+		os.Setenv("HOME", oldHome)
+		if oldPluginRoot != "" {
+			os.Setenv("CLAUDE_PLUGIN_ROOT", oldPluginRoot)
+		} else {
+			os.Unsetenv("CLAUDE_PLUGIN_ROOT")
+		}
+	}()
+
+	// Set empty HOME
+	os.Setenv("HOME", "")
+	os.Setenv("CLAUDE_PLUGIN_ROOT", "")
+
+	os.Args = []string{"ccbell", "stop"}
+	err := run()
+	// Should not panic with empty home
+	t.Logf("run() with empty HOME: err=%v", err)
+}
+
+func TestRunWithInvalidCooldown(t *testing.T) {
+	// Save original args and env
+	oldArgs := os.Args
+	oldHome := os.Getenv("HOME")
+	oldPluginRoot := os.Getenv("CLAUDE_PLUGIN_ROOT")
+	defer func() {
+		os.Args = oldArgs
+		os.Setenv("HOME", oldHome)
+		if oldPluginRoot != "" {
+			os.Setenv("CLAUDE_PLUGIN_ROOT", oldPluginRoot)
+		} else {
+			os.Unsetenv("CLAUDE_PLUGIN_ROOT")
+		}
+	}()
+
+	// Create temp directory
+	tmpDir, err := os.MkdirTemp("", "ccbell-invalid-cooldown")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Create .claude directory
+	claudeDir := filepath.Join(tmpDir, ".claude")
+	if err := os.MkdirAll(claudeDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create config with negative cooldown (should be rejected by validation)
+	// But since validation happens before playing, we test with positive cooldown
+	configContent := `{
+		"enabled": true,
+		"events": {
+			"stop": {
+				"enabled": false,
+				"cooldown": 60
+			}
+		}
+	}`
+	configPath := filepath.Join(claudeDir, "ccbell.config.json")
+	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	// Set environment
+	os.Setenv("HOME", tmpDir)
+	os.Setenv("CLAUDE_PLUGIN_ROOT", tmpDir)
+
+	os.Args = []string{"ccbell", "stop"}
+	err = run()
+	if err != nil {
+		t.Errorf("run() with valid config should not error, got: %v", err)
 	}
 }

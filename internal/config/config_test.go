@@ -251,3 +251,62 @@ func TestLoadConfig(t *testing.T) {
 		}
 	})
 }
+
+func TestEnsureConfig(t *testing.T) {
+	// Create temp directory for test
+	tempDir, err := os.MkdirTemp("", "ccbell-ensure-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	t.Run("creates config when not exists", func(t *testing.T) {
+		// Ensure config doesn't exist
+		configPath := filepath.Join(tempDir, ".claude", "ccbell.config.json")
+		os.RemoveAll(filepath.Join(tempDir, ".claude"))
+
+		err := EnsureConfig(tempDir)
+		if err != nil {
+			t.Errorf("EnsureConfig() error = %v", err)
+		}
+
+		// Verify config was created
+		if _, err := os.Stat(configPath); os.IsNotExist(err) {
+			t.Error("EnsureConfig() should have created config file")
+		}
+	})
+
+	t.Run("skips when config exists", func(t *testing.T) {
+		// Create config first
+		configPath := filepath.Join(tempDir, ".claude", "ccbell.config.json")
+		existingContent := `{"enabled": false}`
+		if err := os.MkdirAll(filepath.Dir(configPath), 0755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(configPath, []byte(existingContent), 0644); err != nil {
+			t.Fatal(err)
+		}
+
+		// EnsureConfig should not overwrite
+		err := EnsureConfig(tempDir)
+		if err != nil {
+			t.Errorf("EnsureConfig() error = %v", err)
+		}
+
+		// Read and verify content is unchanged
+		data, err := os.ReadFile(configPath)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(data) != existingContent {
+			t.Error("EnsureConfig() should not overwrite existing config")
+		}
+	})
+
+	t.Run("handles empty home dir", func(t *testing.T) {
+		// Empty homeDir will try to create config in "/.claude/" which may succeed or fail
+		// depending on permissions - just verify it doesn't panic
+		_ = EnsureConfig("")
+		t.Logf("EnsureConfig with empty homeDir completed without panic")
+	})
+}

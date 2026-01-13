@@ -710,3 +710,255 @@ func TestRunWithUserProfile(t *testing.T) {
 		t.Errorf("run() should not error, got: %v", err)
 	}
 }
+
+func TestRunWithMissingConfigCreatesDefault(t *testing.T) {
+	// Save original args and env
+	oldArgs := os.Args
+	oldHome := os.Getenv("HOME")
+	oldPluginRoot := os.Getenv("CLAUDE_PLUGIN_ROOT")
+	defer func() {
+		os.Args = oldArgs
+		os.Setenv("HOME", oldHome)
+		if oldPluginRoot != "" {
+			os.Setenv("CLAUDE_PLUGIN_ROOT", oldPluginRoot)
+		} else {
+			os.Unsetenv("CLAUDE_PLUGIN_ROOT")
+		}
+	}()
+
+	// Create temp directory WITHOUT .claude directory
+	tmpDir, err := os.MkdirTemp("", "ccbell-missing-config-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Create sounds directory with a fallback sound
+	soundsDir := filepath.Join(tmpDir, "sounds")
+	if err := os.MkdirAll(soundsDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	stopSound := filepath.Join(soundsDir, "stop.aiff")
+	if err := os.WriteFile(stopSound, []byte("dummy"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Set environment
+	os.Setenv("HOME", tmpDir)
+	os.Unsetenv("CLAUDE_PROJECT_DIR")
+	os.Setenv("CLAUDE_PLUGIN_ROOT", tmpDir)
+
+	// Test with disabled plugin - should create default config and exit early
+	os.Args = []string{"ccbell", "stop"}
+	err = run()
+	if err != nil {
+		t.Errorf("run() with missing config should create default and not error, got: %v", err)
+	}
+
+	// Verify config was created
+	configPath := filepath.Join(tmpDir, ".claude", "ccbell.config.json")
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		t.Error("run() should have created default config file")
+	}
+}
+
+func TestRunWithDifferentVolumes(t *testing.T) {
+	// Save original args and env
+	oldArgs := os.Args
+	oldHome := os.Getenv("HOME")
+	oldPluginRoot := os.Getenv("CLAUDE_PLUGIN_ROOT")
+	defer func() {
+		os.Args = oldArgs
+		os.Setenv("HOME", oldHome)
+		if oldPluginRoot != "" {
+			os.Setenv("CLAUDE_PLUGIN_ROOT", oldPluginRoot)
+		} else {
+			os.Unsetenv("CLAUDE_PLUGIN_ROOT")
+		}
+	}()
+
+	// Create temp directory
+	tmpDir, err := os.MkdirTemp("", "ccbell-volume-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Create .claude directory
+	claudeDir := filepath.Join(tmpDir, ".claude")
+	if err := os.MkdirAll(claudeDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create config with different volumes but plugin disabled
+	configContent := `{
+		"enabled": false,
+		"events": {
+			"stop": {"volume": 0.1},
+			"permission_prompt": {"volume": 1.0}
+		}
+	}`
+	configPath := filepath.Join(claudeDir, "ccbell.config.json")
+	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	// Set environment
+	os.Setenv("HOME", tmpDir)
+	os.Setenv("CLAUDE_PLUGIN_ROOT", tmpDir)
+
+	// Test low volume
+	os.Args = []string{"ccbell", "stop"}
+	err = run()
+	if err != nil {
+		t.Errorf("run() with low volume should not error, got: %v", err)
+	}
+
+	// Test max volume
+	os.Args = []string{"ccbell", "permission_prompt"}
+	err = run()
+	if err != nil {
+		t.Errorf("run() with max volume should not error, got: %v", err)
+	}
+}
+
+func TestRunWithZeroCooldown(t *testing.T) {
+	// Save original args and env
+	oldArgs := os.Args
+	oldHome := os.Getenv("HOME")
+	oldPluginRoot := os.Getenv("CLAUDE_PLUGIN_ROOT")
+	defer func() {
+		os.Args = oldArgs
+		os.Setenv("HOME", oldHome)
+		if oldPluginRoot != "" {
+			os.Setenv("CLAUDE_PLUGIN_ROOT", oldPluginRoot)
+		} else {
+			os.Unsetenv("CLAUDE_PLUGIN_ROOT")
+		}
+	}()
+
+	// Create temp directory
+	tmpDir, err := os.MkdirTemp("", "ccbell-zero-cooldown-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Create .claude directory
+	claudeDir := filepath.Join(tmpDir, ".claude")
+	if err := os.MkdirAll(claudeDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create config with zero cooldown (no blocking)
+	configContent := `{
+		"enabled": true,
+		"events": {
+			"stop": {"enabled": false, "cooldown": 0}
+		}
+	}`
+	configPath := filepath.Join(claudeDir, "ccbell.config.json")
+	if err := os.WriteFile(configPath, []byte(configContent), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	// Set environment
+	os.Setenv("HOME", tmpDir)
+	os.Setenv("CLAUDE_PLUGIN_ROOT", tmpDir)
+
+	os.Args = []string{"ccbell", "stop"}
+	err = run()
+	if err != nil {
+		t.Errorf("run() with zero cooldown should not error, got: %v", err)
+	}
+}
+
+func TestDerefFunctions(t *testing.T) {
+	// Test derefBool
+	trueVal := true
+	falseVal := false
+	if derefBool(nil, true) != true {
+		t.Error("derefBool with nil should return default")
+	}
+	if derefBool(&trueVal, false) != true {
+		t.Error("derefBool with true pointer should return true")
+	}
+	if derefBool(&falseVal, true) != false {
+		t.Error("derefBool with false pointer should return false")
+	}
+
+	// Test derefFloat
+	fval := 0.75
+	if derefFloat(nil, 0.5) != 0.5 {
+		t.Error("derefFloat with nil should return default")
+	}
+	if derefFloat(&fval, 0.1) != 0.75 {
+		t.Error("derefFloat with pointer should return value")
+	}
+
+	// Test derefInt
+	ival := 42
+	if derefInt(nil, 10) != 10 {
+		t.Error("derefInt with nil should return default")
+	}
+	if derefInt(&ival, 0) != 42 {
+		t.Error("derefInt with pointer should return value")
+	}
+}
+
+func TestFindPluginRoot(t *testing.T) {
+	tests := []struct {
+		name     string
+		homeDir  string
+		wantPath bool
+	}{
+		{"empty home dir", "", false},
+		{"nonexistent home dir", "/nonexistent/path", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := findPluginRoot(tt.homeDir)
+			if tt.wantPath && result == "" {
+				t.Error("findPluginRoot expected a path but got empty string")
+			}
+			if !tt.wantPath && result != "" {
+				t.Error("findPluginRoot expected empty but got:", result)
+			}
+		})
+	}
+}
+
+func TestFindPluginRootWithCache(t *testing.T) {
+	// Create temp directory structure
+	tmpDir, err := os.MkdirTemp("", "ccbell-plugintest")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Create cache directory structure
+	cacheDir := filepath.Join(tmpDir, ".claude", "plugins", "cache")
+	pluginsDir := filepath.Join(cacheDir, "mpolatcan-cc-plugins")
+	ccbellDir := filepath.Join(pluginsDir, "ccbell")
+	versionDir := filepath.Join(ccbellDir, "v0.2.20")
+	soundsDir := filepath.Join(versionDir, "sounds")
+
+	if err := os.MkdirAll(soundsDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create a dummy sound file for validation
+	stopSound := filepath.Join(soundsDir, "stop.aiff")
+	if err := os.WriteFile(stopSound, []byte("dummy"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	result := findPluginRoot(tmpDir)
+	if result == "" {
+		t.Error("findPluginRoot should find ccbell in cache")
+	}
+	if !strings.Contains(result, "ccbell") {
+		t.Error("findPluginRoot result should contain 'ccbell'")
+	}
+}

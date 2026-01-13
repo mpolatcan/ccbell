@@ -150,6 +150,11 @@ func run() error {
 		pluginRoot = findPluginRoot(homeDir)
 	}
 
+	// === Ensure config exists ===
+	if err := config.EnsureConfig(homeDir); err != nil {
+		fmt.Fprintf(os.Stderr, "ccbell: Warning: could not create config: %v\n", err)
+	}
+
 	// === Load configuration ===
 	cfg, configPath, configErr := config.Load(homeDir)
 	if configErr != nil {
@@ -211,6 +216,16 @@ func run() error {
 	// === Resolve sound path ===
 	player := audio.NewPlayer(pluginRoot)
 	log.Debug("Detected platform: %s", player.Platform())
+
+	// === Ensure audio player is available ===
+	if player.Platform() == audio.PlatformLinux {
+		audioPlayer, err := player.EnsureAudioPlayer()
+		if err != nil {
+			log.Debug("Audio player check failed: %v", err)
+			return fmt.Errorf("no audio player available: %w", err)
+		}
+		log.Debug("Using audio player: %s", audioPlayer)
+	}
 
 	soundPath, err := player.ResolveSoundPath(eventCfg.Sound, eventType)
 	if err != nil {

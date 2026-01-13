@@ -101,6 +101,29 @@ func Load(homeDir string) (*Config, string, error) {
 	return cfg, configPath, nil
 }
 
+// EnsureConfig creates default config file if it doesn't exist.
+func EnsureConfig(homeDir string) error {
+	configPath := filepath.Join(homeDir, ".claude", "ccbell.config.json")
+	if _, err := os.Stat(configPath); err == nil {
+		return nil // Already exists
+	}
+
+	if err := os.MkdirAll(filepath.Dir(configPath), 0755); err != nil {
+		return fmt.Errorf("failed to create config directory: %w", err)
+	}
+
+	data, err := json.MarshalIndent(Default(), "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal default config: %w", err)
+	}
+
+	if err := os.WriteFile(configPath, data, 0644); err != nil {
+		return fmt.Errorf("failed to write config: %w", err)
+	}
+
+	return nil
+}
+
 // Validate checks the configuration for errors.
 func (c *Config) Validate() error {
 	// Validate quiet hours format

@@ -12,6 +12,25 @@ import (
 	"strings"
 )
 
+// Package managers and their install commands.
+var packageManagers = map[string]string{
+	"apt-get": "sudo apt-get update && sudo apt-get install -y",
+	"dnf":     "sudo dnf install -y",
+	"yum":     "sudo yum install -y",
+	"pacman":  "sudo pacman -S --noconfirm",
+	"zypper":  "sudo zypper install -y",
+	"apk":     "sudo apk add --no-cache",
+	"emerge":  "sudo emerge --ask",
+}
+
+// Packages to install for each audio player.
+var playerPackages = map[string]string{
+	"mpv":     "mpv",
+	"ffplay":  "ffmpeg",
+	"paplay":  "pulseaudio-utils",
+	"aplay":   "alsa-utils",
+}
+
 // Platform represents the detected operating system.
 type Platform string
 
@@ -213,4 +232,55 @@ func (p *Player) HasAudioPlayer() bool {
 	default:
 		return false
 	}
+}
+
+// findPackageManager detects available package manager.
+func findPackageManager() string {
+	for pm := range packageManagers {
+		if _, err := exec.LookPath(pm); err == nil {
+			return pm
+		}
+	}
+	return ""
+}
+
+// installAudioPlayer attempts to install the specified audio player.
+func installAudioPlayer(player string) error {
+	pm := findPackageManager()
+	if pm == "" {
+		return errors.New("no package manager found")
+	}
+
+	cmdStr := packageManagers[pm]
+	pkg := playerPackages[player]
+	if pkg == "" {
+		return fmt.Errorf("unknown player: %s", player)
+	}
+
+	cmd := exec.Command("sh", "-c", fmt.Sprintf("%s %s", cmdStr, pkg))
+	cmd.Stdout = nil
+	cmd.Stderr = nil
+
+	return cmd.Run()
+}
+
+// EnsureAudioPlayer finds or installs an audio player. Returns the player name and error.
+func (p *Player) EnsureAudioPlayer() (string, error) {
+	// Already have a player?
+	for _, player := range linuxAudioPlayerNames {
+		if _, err := exec.LookPath(player); err == nil {
+			return player, nil
+		}
+	}
+
+	// Try to install
+	for _, player := range linuxAudioPlayerNames {
+		if err := installAudioPlayer(player); err == nil {
+			if _, err := exec.LookPath(player); err == nil {
+				return player, nil
+			}
+		}
+	}
+
+	return "", errors.New("no audio player found; install mpv, ffmpeg, pulseaudio-utils, or alsa-utils")
 }

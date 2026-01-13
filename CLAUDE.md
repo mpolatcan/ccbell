@@ -45,6 +45,21 @@ Event types: `stop`, `permission_prompt`, `idle_prompt`, `subagent`
 
 ## Release Process
 
-1. Create git tag: `git tag vX.Y.Z`
-2. Push tag: `git push origin vX.Y.Z`
-3. GitHub Actions builds and creates releases at https://github.com/mpolatcan/ccbell/releases
+1. **Run local checks:**
+   ```bash
+   make check  # Run fmt, lint, test, and build
+   ```
+
+2. **Check CI pipeline:** Go to https://github.com/mpolatcan/ccbell/actions/workflows/ci.yml and verify the latest run passed (all checks green). Do NOT proceed if CI failed.
+
+3. **Create git tag:** `git tag vX.Y.Z`
+
+4. **Push tag:** `git push origin vX.Y.Z`
+
+5. **GitHub Actions** builds and creates releases at https://github.com/mpolatcan/ccbell/releases
+
+6. **Sync version** to cc-plugins marketplace:
+   ```bash
+   cd ../ccbell
+   make sync-version VERSION=vX.Y.Z
+   ```

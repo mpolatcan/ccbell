@@ -125,7 +125,6 @@ func TestManager_CheckCooldown(t *testing.T) {
 	})
 }
 
-
 func TestManager_Clear(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "ccbell-state-test")
 	if err != nil {

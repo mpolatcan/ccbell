@@ -17,8 +17,8 @@ type Platform string
 
 // Platform constants represent the supported operating systems.
 const (
-	PlatformMacOS   Platform = "macos"   // Apple macOS
-	PlatformLinux   Platform = "linux"   // Linux
+	PlatformMacOS   Platform = "macos" // Apple macOS
+	PlatformLinux   Platform = "linux" // Linux
 	PlatformUnknown Platform = "unknown"
 )
 

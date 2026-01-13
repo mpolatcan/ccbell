@@ -45,21 +45,47 @@ Event types: `stop`, `permission_prompt`, `idle_prompt`, `subagent`
 
 ## Release Process
 
-1. **Run local checks:**
-   ```bash
-   make check  # Run fmt, lint, test, and build
-   ```
+**CRITICAL: Follow these steps in order. DO NOT SKIP any step.**
 
-2. **Check CI pipeline:** Go to https://github.com/mpolatcan/ccbell/actions/workflows/ci.yml and verify the latest run passed (all checks green). Do NOT proceed if CI failed.
+### Step 1: Run Local Checks
+```bash
+make check
+```
+This runs `fmt`, `lint`, `test`, and `build`. Wait for all checks to pass.
 
-3. **Create git tag:** `git tag vX.Y.Z`
+### Step 2: Verify CI Pipeline Passed
+Go to https://github.com/mpolatcan/ccbell/actions/workflows/ci.yml
 
-4. **Push tag:** `git push origin vX.Y.Z`
+- Find the latest workflow run
+- Confirm ALL checks passed (green checkmarks)
+- **DO NOT PROCEED if CI failed** - fix issues first
 
-5. **GitHub Actions** builds and creates releases at https://github.com/mpolatcan/ccbell/releases
+### Step 3: Create Git Tag
+```bash
+git tag vX.Y.Z
+```
+Replace `X.Y.Z` with the new version number.
 
-6. **Sync version** to cc-plugins marketplace:
-   ```bash
-   cd ../ccbell
-   make sync-version VERSION=vX.Y.Z
-   ```
+### Step 4: Push Tag
+```bash
+git push origin vX.Y.Z
+```
+
+### Step 5: Wait for GitHub Release
+- GitHub Actions will automatically build and create the release
+- Monitor: https://github.com/mpolatcan/ccbell/releases
+- Wait for the release asset to be uploaded
+
+### Step 6: Sync Version to cc-plugins
+```bash
+cd ../ccbell
+make sync-version VERSION=vX.Y.Z
+```
+
+### Step 7: Commit and Push cc-plugins
+```bash
+cd ../cc-plugins
+git add plugins/ccbell/.claude-plugin/plugin.json plugins/ccbell/scripts/ccbell.sh
+git commit -m "chore(ccbell): sync version to vX.Y.Z"
+git push
+```

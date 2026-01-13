@@ -177,7 +177,7 @@ See the [plugin README](https://github.com/mpolatcan/cc-plugins/tree/main/plugin
 | Platform | Audio Backend |
 |----------|--------------|
 | macOS | `afplay` (built-in) |
-| Linux | `paplay`, `aplay`, `mpv`, or `ffplay` |
+| Linux | `mpv`, `paplay`, `aplay`, or `ffplay` |
 
 ## Contributing
 

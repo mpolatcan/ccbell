@@ -41,7 +41,17 @@ Event types: `stop`, `permission_prompt`, `idle_prompt`, `subagent`
 | Platform | Backend |
 |----------|---------|
 | macOS | `afplay` (built-in) |
-| Linux | `paplay`, `aplay`, `mpv`, or `ffplay` |
+| Linux | `mpv`, `paplay`, `aplay`, or `ffplay` |
+
+## External Release Check Rule :warning:
+
+**CRITICAL:** Before tagging a new version, ensure the release is complete:
+
+1. Wait for GitHub Actions to finish building and uploading release assets
+2. Verify the release appears at https://github.com/mpolatcan/ccbell/releases
+3. Only after release is confirmed, run `make sync-version VERSION=vX.Y.Z` in cc-plugins
+
+**NEVER push version tags unless the release is complete.**
 
 ## Release Process :rotating_light:
 

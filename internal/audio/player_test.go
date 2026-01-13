@@ -7,6 +7,8 @@ import (
 	"testing"
 )
 
+const darwinOS = "darwin"
+
 func TestResolveSoundPath(t *testing.T) {
 	// Create temp plugin root with sounds
 	tempDir, err := os.MkdirTemp("", "ccbell-audio-test")
@@ -106,7 +108,7 @@ func TestDetectPlatform(t *testing.T) {
 	platform := detectPlatform()
 
 	switch runtime.GOOS {
-	case "darwin":
+	case darwinOS:
 		if platform != PlatformMacOS {
 			t.Errorf("expected PlatformMacOS on darwin, got %s", platform)
 		}
@@ -497,7 +499,7 @@ func TestResolveSoundPathDirectPath(t *testing.T) {
 }
 
 func TestPlayMacOSNonBlocking(t *testing.T) {
-	if runtime.GOOS != "darwin" {
+	if runtime.GOOS != darwinOS {
 		t.Skip("afplay is only available on macOS")
 	}
 

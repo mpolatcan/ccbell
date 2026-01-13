@@ -54,11 +54,22 @@ make check
 This runs `fmt`, `lint`, `test`, and `build`. Wait for all checks to pass.
 
 ### Step 2: Verify CI Pipeline Passed
-Go to https://github.com/mpolatcan/ccbell/actions/workflows/ci.yml
 
-- Find the latest workflow run
-- Confirm ALL checks passed (green checkmarks)
+Use `gh` CLI to check the latest workflow run:
+
+```bash
+# Check latest run status
+gh run list --workflow=ci.yml --limit 1
+
+# View the run details
+gh run view $(gh run list --workflow=ci.yml --limit 1 --json databaseId --jq '.databaseId')
+```
+
+- Confirm `status: "COMPLETED"` and `conclusion: "SUCCESS"`
 - **DO NOT PROCEED if CI failed** - fix issues first
+
+Or view in browser:
+https://github.com/mpolatcan/ccbell/actions/workflows/ci.yml
 
 ### Step 3: Create Git Tag
 ```bash

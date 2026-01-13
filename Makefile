@@ -183,16 +183,17 @@ sync-version:
 		echo "Error: $$PLUGIN_JSON not found"; \
 		exit 1; \
 	fi
-	@SED_EXT=""; \
-	case "$$(uname -s)" in \
-		Darwin*) SED_EXT="''" ;; \
-		Linux*)  SED_EXT="" ;; \
-	esac; \
-	# Extract version without 'v' prefix for PLUGIN_VERSION matching
+	@# Extract version without 'v' prefix for PLUGIN_VERSION matching
 	PLUGIN_VER=$$(echo "$(VERSION)" | sed 's/^v//'); \
-	sed -i $$SED_EXT "s/PLUGIN_VERSION=\"[0-9.]*\"/PLUGIN_VERSION=\"$$PLUGIN_VER\"/g" "$$SCRIPT_PATH"; \
-	sed -i $$SED_EXT "s/\"version\": \"[0-9.]*\"/\"version\": \"$$PLUGIN_VER\"/g" "$$PLUGIN_JSON"
-	@echo "$(GREEN)✓ Updated PLUGIN_VERSION and version in cc-plugins$(RESET)"
+	case "$$(uname -s)" in \
+		Darwin*) \
+			sed -i '' "s/PLUGIN_VERSION=\"[0-9.]*\"/PLUGIN_VERSION=\"$$PLUGIN_VER\"/g" "$$SCRIPT_PATH"; \
+			sed -i '' "s/\"version\": \"[0-9.]*\"/\"version\": \"$$PLUGIN_VER\"/g" "$$PLUGIN_JSON" ;; \
+		Linux*) \
+			sed -i "s/PLUGIN_VERSION=\"[0-9.]*\"/PLUGIN_VERSION=\"$$PLUGIN_VER\"/g" "$$SCRIPT_PATH"; \
+			sed -i "s/\"version\": \"[0-9.]*\"/\"version\": \"$$PLUGIN_VER\"/g" "$$PLUGIN_JSON" ;; \
+	esac
+	@echo "$(GREEN)Updated PLUGIN_VERSION and version to $$PLUGIN_VER in cc-plugins$(RESET)"
 	@echo "$(BLUE)Don't forget to commit and push the changes in cc-plugins!$(RESET)"
 
 # Help

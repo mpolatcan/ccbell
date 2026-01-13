@@ -187,10 +187,10 @@ sync-version:
 		PLUGIN_VER=$$(echo "$(VERSION)" | sed 's/^v//'); \
 		OS=$$(uname -s); \
 		if [ "$$OS" = "Darwin" ]; then \
-			sed -i '' "s/PLUGIN_VERSION=\"[0-9.]*\"/PLUGIN_VERSION=\"$$PLUGIN_VER\"/g" "$$SCRIPT_PATH"; \
+			sed -i '' "s/VERSION=\"[0-9.]*\"/VERSION=\"$$PLUGIN_VER\"/g" "$$SCRIPT_PATH"; \
 			sed -i '' "s/\"version\": \"[0-9.]*\"/\"version\": \"$$PLUGIN_VER\"/g" "$$PLUGIN_JSON"; \
 		else \
-			sed -i "s/PLUGIN_VERSION=\"[0-9.]*\"/PLUGIN_VERSION=\"$$PLUGIN_VER\"/g" "$$SCRIPT_PATH"; \
+			sed -i "s/VERSION=\"[0-9.]*\"/VERSION=\"$$PLUGIN_VER\"/g" "$$SCRIPT_PATH"; \
 			sed -i "s/\"version\": \"[0-9.]*\"/\"version\": \"$$PLUGIN_VER\"/g" "$$PLUGIN_JSON"; \
 		fi; \
 		echo "$(GREEN)Updated to version $$PLUGIN_VER$(RESET)" \

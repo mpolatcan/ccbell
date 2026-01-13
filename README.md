@@ -148,7 +148,7 @@ NEW_VERSION=$(cd ../../../ccbell && git describe --tags --always --dirty | sed '
 
 # Update both files
 sed -i '' "s/\"version\": \"[0-9.]*\"/\"version\": \"${NEW_VERSION}\"/" .claude-plugin/plugin.json
-sed -i '' "s/PLUGIN_VERSION=\"[0-9.]*\"/PLUGIN_VERSION=\"${NEW_VERSION}\"/" scripts/ccbell.sh
+sed -i '' "s/VERSION=\"[0-9.]*\"/VERSION=\"${NEW_VERSION}\"/" scripts/ccbell.sh
 
 # Commit and push
 git add .claude-plugin/plugin.json scripts/ccbell.sh

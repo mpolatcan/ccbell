@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 )
 
 func TestNewManager(t *testing.T) {
@@ -126,51 +125,6 @@ func TestManager_CheckCooldown(t *testing.T) {
 	})
 }
 
-func TestManager_GetLastTrigger(t *testing.T) {
-	tmpDir, err := os.MkdirTemp("", "ccbell-state-test")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(tmpDir)
-
-	claudeDir := filepath.Join(tmpDir, ".claude")
-	if err := os.MkdirAll(claudeDir, 0755); err != nil {
-		t.Fatal(err)
-	}
-
-	m := NewManager(tmpDir)
-	m.Clear()
-
-	t.Run("returns zero time for unknown event", func(t *testing.T) {
-		lastTrigger, err := m.GetLastTrigger("unknown")
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		if !lastTrigger.IsZero() {
-			t.Error("should return zero time for unknown event")
-		}
-	})
-
-	t.Run("returns correct time after trigger", func(t *testing.T) {
-		before := time.Now().Add(-time.Second)
-
-		_, err := m.CheckCooldown("stop", 10)
-		if err != nil {
-			t.Fatalf("trigger error: %v", err)
-		}
-
-		after := time.Now().Add(time.Second)
-
-		lastTrigger, err := m.GetLastTrigger("stop")
-		if err != nil {
-			t.Fatalf("GetLastTrigger error: %v", err)
-		}
-
-		if lastTrigger.Before(before) || lastTrigger.After(after) {
-			t.Errorf("lastTrigger %v not between %v and %v", lastTrigger, before, after)
-		}
-	})
-}
 
 func TestManager_Clear(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "ccbell-state-test")

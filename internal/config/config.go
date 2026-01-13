@@ -196,11 +196,6 @@ func mergeEvent(dst, src *Event) {
 	}
 }
 
-// IsValidEvent checks if an event type is in the whitelist.
-func IsValidEvent(eventType string) bool {
-	return ValidEvents[eventType]
-}
-
 // ValidateEventType returns an error if the event type is invalid.
 func ValidateEventType(eventType string) error {
 	// Check format (alphanumeric and underscore only)

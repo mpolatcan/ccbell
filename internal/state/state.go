@@ -150,23 +150,6 @@ func (m *Manager) save(state *State) error {
 	return nil
 }
 
-// GetLastTrigger returns the last trigger time for an event.
-func (m *Manager) GetLastTrigger(eventType string) (time.Time, error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	state, err := m.load()
-	if err != nil {
-		return time.Time{}, err
-	}
-
-	if ts, ok := state.LastTrigger[eventType]; ok {
-		return time.Unix(ts, 0), nil
-	}
-
-	return time.Time{}, nil
-}
-
 // Clear removes the state file.
 func (m *Manager) Clear() error {
 	m.mu.Lock()

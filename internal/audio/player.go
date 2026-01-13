@@ -22,6 +22,26 @@ const (
 	PlatformUnknown Platform = "unknown"
 )
 
+// linuxAudioPlayerNames is the list of audio players checked on Linux.
+var linuxAudioPlayerNames = []string{"paplay", "aplay", "mpv", "ffplay"}
+
+// getLinuxPlayerArgs returns arguments for a Linux audio player.
+func getLinuxPlayerArgs(playerName, soundPath string, volume float64) []string {
+	volPercent := int(volume * 100)
+	switch playerName {
+	case "paplay":
+		return []string{soundPath}
+	case "aplay":
+		return []string{"-q", soundPath}
+	case "mpv":
+		return []string{"--really-quiet", fmt.Sprintf("--volume=%d", volPercent), soundPath}
+	case "ffplay":
+		return []string{"-nodisp", "-autoexit", "-volume", fmt.Sprintf("%d", volPercent), soundPath}
+	default:
+		return nil
+	}
+}
+
 // bundledSoundNameRegex validates bundled sound names.
 var bundledSoundNameRegex = regexp.MustCompile(`^[a-z_]+$`)
 
@@ -81,24 +101,10 @@ func (p *Player) playMacOS(soundPath string, volume float64) error {
 
 // playLinux tries available audio players on Linux.
 func (p *Player) playLinux(soundPath string, volume float64) error {
-	volPercent := int(volume * 100)
-
-	// Try players in order of preference
-	players := []struct {
-		name string
-		args func() []string
-	}{
-		{"paplay", func() []string { return []string{soundPath} }},
-		{"aplay", func() []string { return []string{"-q", soundPath} }},
-		{"mpv", func() []string { return []string{"--really-quiet", fmt.Sprintf("--volume=%d", volPercent), soundPath} }},
-		{"ffplay", func() []string {
-			return []string{"-nodisp", "-autoexit", "-volume", fmt.Sprintf("%d", volPercent), soundPath}
-		}},
-	}
-
-	for _, player := range players {
-		if _, err := exec.LookPath(player.name); err == nil {
-			cmd := exec.Command(player.name, player.args()...)
+	for _, playerName := range linuxAudioPlayerNames {
+		if _, err := exec.LookPath(playerName); err == nil {
+			args := getLinuxPlayerArgs(playerName, soundPath, volume)
+			cmd := exec.Command(playerName, args...)
 			return cmd.Start() // Non-blocking
 		}
 	}
@@ -196,7 +202,7 @@ func (p *Player) HasAudioPlayer() bool {
 		_, err := exec.LookPath("afplay")
 		return err == nil
 	case PlatformLinux:
-		for _, player := range []string{"paplay", "aplay", "mpv", "ffplay"} {
+		for _, player := range linuxAudioPlayerNames {
 			if _, err := exec.LookPath(player); err == nil {
 				return true
 			}

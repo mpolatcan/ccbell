@@ -23,10 +23,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Remove .out directory
+      - name: Clean build artifacts
         run: |
-          if [ -d ".out" ]; then rm -rf .out; fi
-          if [ -f "coverage.out" ]; then rm -f coverage.out; fi
+          rm -rf ./bin
+          rm -f coverage.out
         shell: bash
 
       - name: Set up Go
@@ -47,16 +47,8 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
-      - name: Install audio player (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg alsa-utils
-
       - name: Run tests
-        run: |
-          go test -v -race -coverprofile=coverage.out $(go list ./... | grep -v '/\.out$')
-        shell: bash
+        run: go test -v -race -coverprofile=coverage.out ./...
 
       - name: Upload coverage
         if: matrix.os == 'ubuntu-latest' && matrix.go-version == '1.25.5'

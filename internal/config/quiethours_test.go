@@ -141,35 +141,6 @@ func TestParseTimeToMinutes(t *testing.T) {
 	}
 }
 
-func TestQuietHoursStatus(t *testing.T) {
-	tests := []struct {
-		name       string
-		quietHours *QuietHours
-		wantEmpty  bool
-	}{
-		{
-			name:       "not configured - nil",
-			quietHours: nil,
-			wantEmpty:  false,
-		},
-		{
-			name:       "not configured - empty",
-			quietHours: &QuietHours{},
-			wantEmpty:  false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			cfg := &Config{QuietHours: tt.quietHours}
-			status := cfg.QuietHoursStatus()
-			if status == "" && !tt.wantEmpty {
-				t.Error("expected non-empty status")
-			}
-		})
-	}
-}
-
 func formatTime(hour, _ int) string {
 	return padZero(hour) + ":00"
 }

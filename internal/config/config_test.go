@@ -14,6 +14,7 @@ func TestValidateEventType(t *testing.T) {
 	}{
 		{"valid stop", "stop", false},
 		{"valid permission_prompt", "permission_prompt", false},
+		{"valid idle_prompt", "idle_prompt", false},
 		{"valid subagent", "subagent", false},
 		{"invalid event", "invalid_event", true},
 		{"injection attempt", "stop; echo pwned", true},

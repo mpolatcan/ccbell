@@ -33,7 +33,7 @@ BLUE  := \033[0;34m
 GREEN := \033[0;32m
 RESET := \033[0m
 
-.PHONY: all build clean test lint install uninstall dist release checksums help
+.PHONY: all build clean test lint fmt install uninstall dist release checksums help coverage check dev run version sync-version
 
 # Default target
 all: build
@@ -178,6 +178,11 @@ sync-version:
 		echo "Error: $$SCRIPT_PATH not found"; \
 		exit 1; \
 	fi
+	@PLUGIN_JSON="../cc-plugins/plugins/ccbell/.claude-plugin/plugin.json"; \
+	if [ ! -f "$$PLUGIN_JSON" ]; then \
+		echo "Error: $$PLUGIN_JSON not found"; \
+		exit 1; \
+	fi
 	@SED_EXT=""; \
 	case "$$(uname -s)" in \
 		Darwin*) SED_EXT="''" ;; \
@@ -185,9 +190,10 @@ sync-version:
 	esac; \
 	# Extract version without 'v' prefix for PLUGIN_VERSION matching
 	PLUGIN_VER=$$(echo "$(VERSION)" | sed 's/^v//'); \
-	sed -i $$SED_EXT "s/PLUGIN_VERSION=\"[0-9.]*\"/PLUGIN_VERSION=\"$$PLUGIN_VER\"/g" "$$SCRIPT_PATH"
-	@echo "$(GREEN)✓ Updated PLUGIN_VERSION to $$PLUGIN_VER in $$SCRIPT_PATH$(RESET)"
-	@echo "$(BLUE)Don't forget to commit and push the change in cc-plugins!$(RESET)"
+	sed -i $$SED_EXT "s/PLUGIN_VERSION=\"[0-9.]*\"/PLUGIN_VERSION=\"$$PLUGIN_VER\"/g" "$$SCRIPT_PATH"; \
+	sed -i $$SED_EXT "s/\"version\": \"[0-9.]*\"/\"version\": \"$$PLUGIN_VER\"/g" "$$PLUGIN_JSON"
+	@echo "$(GREEN)✓ Updated PLUGIN_VERSION and version in cc-plugins$(RESET)"
+	@echo "$(BLUE)Don't forget to commit and push the changes in cc-plugins!$(RESET)"
 
 # Help
 help:
@@ -210,6 +216,7 @@ help:
 	@echo "  sync-version  Sync version to cc-plugins marketplace (requires VERSION=)"
 	@echo "  check         Run fmt, lint, test, and build"
 	@echo "  dev           Quick development build"
+	@echo "  run           Build and run with arguments"
 	@echo "  version       Show version info"
 	@echo "  help          Show this help"
 	@echo ""

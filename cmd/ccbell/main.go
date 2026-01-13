@@ -80,9 +80,9 @@ func findPluginRoot(homeDir string) string {
 			return nil
 		}
 		if info.IsDir() && path != ccbellPath {
-			// Check if it's a version directory (starts with v or just numbers)
+			// Check if it's a version directory (semver format: vX.Y.Z or X.Y.Z)
 			name := info.Name()
-			if strings.HasPrefix(name, "v") || strings.HasPrefix(name, "0") {
+			if strings.HasPrefix(name, "v") || (len(name) > 0 && name[0] >= '0' && name[0] <= '9') {
 				// This is likely a version directory
 				if latestVersion == "" || name > latestVersion {
 					latestVersion = name
@@ -109,7 +109,7 @@ func main() {
 
 	if err := run(); err != nil {
 		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
-		//nolint:gocritic
+		//lint:ignore gocritic - intentional exit with error code
 		os.Exit(1)
 	}
 }

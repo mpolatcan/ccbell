@@ -134,25 +134,25 @@ This triggers `.github/workflows/release.yml` which:
 
 After tagging and pushing in the ccbell repository, you MUST also update the version in cc-plugins to the SAME version:
 
+**Use the make target (recommended):**
+```bash
+make sync-version VERSION=v1.0.0
+```
+
+**Or manually from cc-plugins:**
 ```bash
 cd ../cc-plugins/plugins/ccbell
 
-# Step 1: Get current version from plugin.json
-CURRENT_VERSION=$(grep '"version"' .claude-plugin/plugin.json | sed 's/.*: *"\([^"]*\)".*/\1/')
-echo "Current version: $CURRENT_VERSION"
+# Get version from ccbell (assuming ccbell is at ../../../ccbell)
+NEW_VERSION=$(cd ../../../ccbell && git describe --tags --always --dirty | sed 's/^v//')
 
-# Step 2: Calculate new version (adjust based on your release type)
-# For patch: NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print $1"."$2"."($3+1)}')
-# For minor: NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print $1"."($2+1)".0"}')
-# For major: NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print ($1+1)".0.0"}')
+# Update both files
+sed -i '' "s/\"version\": \"[0-9.]*\"/\"version\": \"${NEW_VERSION}\"/" .claude-plugin/plugin.json
+sed -i '' "s/PLUGIN_VERSION=\"[0-9.]*\"/PLUGIN_VERSION=\"${NEW_VERSION}\"/" scripts/ccbell.sh
 
-# Step 3: Update cc-plugins files (use SAME version as ccbell tag)
-sed -i '' "s/\"version\": *\"${CURRENT_VERSION}\"/\"version\": \"${CURRENT_VERSION}\"/" .claude-plugin/plugin.json
-sed -i '' "s/PLUGIN_VERSION=\"${CURRENT_VERSION}\"/PLUGIN_VERSION=\"${CURRENT_VERSION}\"/" scripts/ccbell.sh
-
-# Step 4: Commit and push
+# Commit and push
 git add .claude-plugin/plugin.json scripts/ccbell.sh
-git commit -m "chore(ccbell): sync version to v${CURRENT_VERSION}"
+git commit -m "chore(ccbell): sync version to v${NEW_VERSION}"
 git push
 ```
 
@@ -162,9 +162,8 @@ git push
 1. [ ] Make changes in ccbell
 2. [ ] Tag and push in ccbell: `git tag v<version> && git push origin v<version>`
 3. [ ] Wait for GitHub Release to be created
-4. [ ] Get version from ccbell tag (e.g., `v0.3.0`)
-5. [ ] Update `plugin.json` and `ccbell.sh` in cc-plugins to the SAME version
-6. [ ] Commit and push version sync in cc-plugins
+4. [ ] Sync version to cc-plugins: `make sync-version VERSION=v<version>`
+5. [ ] Commit and push version sync in cc-plugins
 
 ## Configuration
 

@@ -15,9 +15,17 @@ make build           # Build for current platform
 make test            # Run tests with race detection
 make coverage        # Generate coverage report
 make lint            # Run linter (golangci-lint or go vet)
-make dist            # Cross-compile for all platforms
+make fmt             # Format code
+make clean           # Remove build artifacts
+make install         # Install ccbell binary to plugin directory
+make uninstall       # Remove from plugin directory
+make dist            # Cross-compile for all platforms (cleans build dir first)
 make release         # Build, checksum, and create archives
 make check           # Run fmt, lint, test, and build
+make dev             # Quick development build
+make run             # Build and run with arguments
+make sync-version    # Sync version to cc-plugins marketplace
+make version         # Show version information
 ```
 
 ## Usage
@@ -32,7 +40,7 @@ Event types: `stop`, `permission_prompt`, `idle_prompt`, `subagent`
 
 | Platform | Backend |
 |----------|---------|
-| macOS | `afplay` |
+| macOS | `afplay` (built-in) |
 | Linux | `paplay`, `aplay`, `mpv`, or `ffplay` |
 
 ## Release Process

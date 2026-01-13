@@ -60,16 +60,3 @@ func parseTimeToMinutes(timeStr string) (int, error) {
 
 	return hours*60 + minutes, nil
 }
-
-// QuietHoursStatus returns human-readable quiet hours status.
-func (c *Config) QuietHoursStatus() string {
-	if c.QuietHours == nil || c.QuietHours.Start == "" || c.QuietHours.End == "" {
-		return "not configured"
-	}
-
-	if c.IsInQuietHours() {
-		return "active (currently in quiet period)"
-	}
-
-	return "configured but not active"
-}

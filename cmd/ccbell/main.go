@@ -99,18 +99,18 @@ func findPluginRoot(homeDir string) string {
 }
 
 func main() {
-	// Recover from panics to prevent crashes
+	var exitCode int
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Fprintf(os.Stderr, "PANIC: %v\n", r)
-			os.Exit(2)
+			exitCode = 2
 		}
+		os.Exit(exitCode)
 	}()
 
 	if err := run(); err != nil {
 		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
-		//lint:ignore gocritic - intentional exit with error code
-		os.Exit(1)
+		exitCode = 1
 	}
 }
 

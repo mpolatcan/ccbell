@@ -390,13 +390,14 @@ func TestGetLinuxPlayerArgs(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := getLinuxPlayerArgs(tt.player, tt.soundPath, tt.volume)
-			if tt.want == nil {
+			switch {
+			case tt.want == nil:
 				if got != nil {
 					t.Errorf("getLinuxPlayerArgs() = %v, want nil", got)
 				}
-			} else if len(got) != len(tt.want) {
+			case len(got) != len(tt.want):
 				t.Errorf("getLinuxPlayerArgs() length = %d, want %d", len(got), len(tt.want))
-			} else {
+			default:
 				for i, v := range got {
 					if v != tt.want[i] {
 						t.Errorf("getLinuxPlayerArgs()[%d] = %q, want %q", i, v, tt.want[i])
@@ -496,6 +497,10 @@ func TestResolveSoundPathDirectPath(t *testing.T) {
 }
 
 func TestPlayMacOSNonBlocking(t *testing.T) {
+	if runtime.GOOS != "darwin" {
+		t.Skip("afplay is only available on macOS")
+	}
+
 	// Create temp sound file
 	tempDir, err := os.MkdirTemp("", "ccbell-play-test")
 	if err != nil {
@@ -618,7 +623,7 @@ func TestPackageManagersMapping(t *testing.T) {
 	}
 }
 
-// Helper function
+// Helper function.
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsHelper(s, substr))
 }

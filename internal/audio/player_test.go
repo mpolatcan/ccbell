@@ -8,6 +8,7 @@ import (
 )
 
 const darwinOS = "darwin"
+const linuxOS = "linux"
 
 func TestResolveSoundPath(t *testing.T) {
 	// Create temp plugin root with sounds
@@ -112,7 +113,7 @@ func TestDetectPlatform(t *testing.T) {
 		if platform != PlatformMacOS {
 			t.Errorf("expected PlatformMacOS on darwin, got %s", platform)
 		}
-	case "linux":
+	case linuxOS:
 		if platform != PlatformLinux {
 			t.Errorf("expected PlatformLinux on linux, got %s", platform)
 		}
@@ -525,7 +526,7 @@ func TestPlayMacOSNonBlocking(t *testing.T) {
 }
 
 func TestPlayLinuxNoPlayer(t *testing.T) {
-	if runtime.GOOS != "linux" {
+	if runtime.GOOS != linuxOS {
 		t.Skip("this test is only for Linux")
 	}
 

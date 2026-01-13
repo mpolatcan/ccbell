@@ -49,7 +49,7 @@ Event types: `stop`, `permission_prompt`, `idle_prompt`, `subagent`
 
 1. Wait for GitHub Actions to finish building and uploading release assets
 2. Verify the release appears at https://github.com/mpolatcan/ccbell/releases
-3. Only after release is confirmed, run `make sync-version VERSION=vX.Y.Z` in cc-plugins
+3. Only after release is confirmed, run `make sync-version VERSION=vX.Y.Z` (from the ccbell directory where the Makefile is)
 
 **NEVER push version tags unless the release is complete.**
 
@@ -99,7 +99,6 @@ git push origin vX.Y.Z
 
 ### Step 6: Sync Version to cc-plugins :arrows_counterclockwise:
 ```bash
-cd ../ccbell
 make sync-version VERSION=vX.Y.Z
 ```
 

@@ -22,8 +22,8 @@ const (
 	PlatformUnknown Platform = "unknown"
 )
 
-// linuxAudioPlayerNames is the list of audio players checked on Linux.
-var linuxAudioPlayerNames = []string{"paplay", "aplay", "mpv", "ffplay"}
+// linuxAudioPlayerNames is the list of audio players checked on Linux (priority order).
+var linuxAudioPlayerNames = []string{"mpv", "paplay", "aplay", "ffplay"}
 
 // getLinuxPlayerArgs returns arguments for a Linux audio player.
 func getLinuxPlayerArgs(playerName, soundPath string, volume float64) []string {

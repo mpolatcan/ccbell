@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 )
 
 // Config represents the full ccbell configuration.
@@ -15,9 +16,11 @@ type Config struct {
 	Enabled       bool                `json:"enabled"`
 	Debug         bool                `json:"debug"`
 	ActiveProfile string              `json:"activeProfile"`
+	ActivePack    string              `json:"activePack,omitempty"`
 	QuietHours    *QuietHours         `json:"quietHours,omitempty"`
 	Events        map[string]*Event   `json:"events,omitempty"`
 	Profiles      map[string]*Profile `json:"profiles,omitempty"`
+	Packs         map[string]*PackConfig `json:"packs,omitempty"`
 }
 
 // defaultProfileName is the name of the default profile.
@@ -40,6 +43,12 @@ type Event struct {
 // Profile represents a named configuration preset.
 type Profile struct {
 	Events map[string]*Event `json:"events,omitempty"`
+}
+
+// PackConfig represents configuration for an installed sound pack.
+type PackConfig struct {
+	InstalledAt string `json:"installedAt"`
+	Version     string `json:"version,omitempty"`
 }
 
 // ValidEvents is the whitelist of allowed event types.
@@ -235,5 +244,14 @@ func ValidateEventType(eventType string) error {
 		return fmt.Errorf("unknown event type: %s (valid: %v)", eventType, valid)
 	}
 
+	return nil
+}
+
+// ValidatePackID validates a pack identifier.
+func ValidatePackID(packID string) error {
+	packID = strings.TrimPrefix(packID, "v")
+	if !eventTypeRegex.MatchString(packID) {
+		return fmt.Errorf("invalid pack ID: %s", packID)
+	}
 	return nil
 }

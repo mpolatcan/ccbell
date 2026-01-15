@@ -68,6 +68,7 @@ var bundledSoundNameRegex = regexp.MustCompile(`^[a-z_]+$`)
 type Player struct {
 	platform   Platform
 	pluginRoot string
+	homeDir    string
 }
 
 // NewPlayer creates a new audio player.
@@ -75,6 +76,15 @@ func NewPlayer(pluginRoot string) *Player {
 	return &Player{
 		platform:   detectPlatform(),
 		pluginRoot: pluginRoot,
+	}
+}
+
+// NewPlayerWithHome creates a new audio player with home directory for pack support.
+func NewPlayerWithHome(pluginRoot, homeDir string) *Player {
+	return &Player{
+		platform:   detectPlatform(),
+		pluginRoot: pluginRoot,
+		homeDir:    homeDir,
 	}
 }
 
@@ -135,6 +145,7 @@ func (p *Player) playLinux(soundPath string, volume float64) error {
 // Supported formats:
 //   - bundled:stop (bundled with plugin)
 //   - custom:/path/to/file.mp3
+//   - pack:pack_id:sound_file (sound from a pack)
 //   - /absolute/path/to/file.mp3
 func (p *Player) ResolveSoundPath(soundSpec, eventType string) (string, error) {
 	if soundSpec == "" {
@@ -148,10 +159,51 @@ func (p *Player) ResolveSoundPath(soundSpec, eventType string) (string, error) {
 	case strings.HasPrefix(soundSpec, "custom:"):
 		return p.resolveCustomSound(strings.TrimPrefix(soundSpec, "custom:"))
 
+	case strings.HasPrefix(soundSpec, "pack:"):
+		return p.resolvePackSound(strings.TrimPrefix(soundSpec, "pack:"))
+
 	default:
 		// Direct path - apply same security checks as custom
 		return p.resolveCustomSound(soundSpec)
 	}
+}
+
+// resolvePackSound resolves a pack sound (format: pack_id:sound_file).
+func (p *Player) resolvePackSound(spec string) (string, error) {
+	// Parse pack_id:sound_file format
+	parts := strings.SplitN(spec, ":", 2)
+	if len(parts) != 2 {
+		return "", fmt.Errorf("invalid pack sound format: %s (expected pack_id:sound_file)", spec)
+	}
+
+	packID := parts[0]
+	soundFile := parts[1]
+
+	// Validate pack ID
+	if !bundledSoundNameRegex.MatchString(packID) {
+		return "", fmt.Errorf("invalid pack ID: %s", packID)
+	}
+
+	// Validate sound file name (basic check for path traversal)
+	if strings.Contains(soundFile, "..") || strings.Contains(soundFile, "/") {
+		return "", fmt.Errorf("invalid sound file name: %s", soundFile)
+	}
+
+	// Check home directory is set
+	if p.homeDir == "" {
+		return "", fmt.Errorf("home directory not set for pack sounds")
+	}
+
+	// Resolve pack directory
+	packDir := filepath.Join(p.homeDir, ".claude", "ccbell", "packs", packID)
+	path := filepath.Join(packDir, soundFile)
+
+	// Check file exists
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return "", fmt.Errorf("pack sound not found: pack=%s, sound=%s", packID, soundFile)
+	}
+
+	return path, nil
 }
 
 // resolveCustomSound resolves a custom sound path with security validation.

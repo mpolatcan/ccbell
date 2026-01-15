@@ -8,8 +8,10 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -58,7 +60,7 @@ type PackManifest struct {
 
 // InstalledPack represents an installed pack in the local filesystem.
 type InstalledPack struct {
-	Manifest  PackManifest
+	Manifest   PackManifest
 	InstallDir string
 }
 
@@ -66,19 +68,23 @@ type InstalledPack struct {
 type Manager struct {
 	homeDir    string
 	packsDir   string
+	configPath string
 	httpClient *http.Client
 }
 
 // NewManager creates a new pack manager.
 func NewManager(homeDir string) *Manager {
 	packsDir := ""
+	configPath := ""
 	if homeDir != "" {
 		packsDir = filepath.Join(homeDir, ".claude", "ccbell", PacksDir)
+		configPath = filepath.Join(homeDir, ".claude", "ccbell.config.json")
 	}
 
 	return &Manager{
 		homeDir:    homeDir,
 		packsDir:   packsDir,
+		configPath: configPath,
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
@@ -275,7 +281,7 @@ func (m *Manager) ListInstalled() ([]InstalledPack, error) {
 		}
 
 		installed = append(installed, InstalledPack{
-			Manifest:    manifest,
+			Manifest:   manifest,
 			InstallDir: filepath.Join(m.packsDir, entry.Name()),
 		})
 	}
@@ -299,11 +305,11 @@ func (m *Manager) GetPackPath(packID, soundFile string) (string, error) {
 	return path, nil
 }
 
-// UsePack applies a pack's sounds to the configuration.
-func (m *Manager) UsePack(packID string) ([]string, error) {
+// UsePack applies a pack's sounds to the configuration and updates config file.
+func (m *Manager) UsePack(packID string) error {
 	installed, err := m.ListInstalled()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	var target InstalledPack
@@ -315,16 +321,61 @@ func (m *Manager) UsePack(packID string) ([]string, error) {
 	}
 
 	if target.Manifest.ID == "" {
-		return nil, fmt.Errorf("pack not installed: %s (use /ccbell:packs install %s first)", packID, packID)
+		return fmt.Errorf("pack not installed: %s (use /ccbell:packs install %s first)", packID, packID)
 	}
 
-	// Return the events that will be configured
-	var events []string
-	for event := range target.Manifest.Events {
-		events = append(events, event)
+	// Update config file with pack sounds
+	if m.configPath != "" {
+		if err := m.updateConfigWithPack(target); err != nil {
+			return fmt.Errorf("failed to update config: %w", err)
+		}
 	}
 
-	return events, nil
+	return nil
+}
+
+// updateConfigWithPack updates the config file to use sounds from the pack.
+func (m *Manager) updateConfigWithPack(pack InstalledPack) error {
+	// Read existing config
+	var config map[string]interface{}
+	data, err := os.ReadFile(m.configPath)
+	if err != nil {
+		// Create new config if doesn't exist
+		config = make(map[string]interface{})
+	} else {
+		if err := json.Unmarshal(data, &config); err != nil {
+			return fmt.Errorf("failed to parse config: %w", err)
+		}
+	}
+
+	// Set active pack
+	config["activePack"] = pack.Manifest.ID
+
+	// Ensure events section exists
+	if _, ok := config["events"]; !ok {
+		config["events"] = make(map[string]interface{})
+	}
+
+	events := config["events"].(map[string]interface{})
+
+	// Update each event with pack sound
+	for eventType, soundFile := range pack.Manifest.Events {
+		events[eventType] = map[string]interface{}{
+			"sound": fmt.Sprintf("pack:%s:%s", pack.Manifest.ID, soundFile),
+		}
+	}
+
+	// Write updated config
+	output, err := json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal config: %w", err)
+	}
+
+	if err := os.WriteFile(m.configPath, output, 0644); err != nil {
+		return fmt.Errorf("failed to write config: %w", err)
+	}
+
+	return nil
 }
 
 // GetPackSound returns the sound file path for a specific event in a pack.
@@ -350,6 +401,89 @@ func (m *Manager) GetPackSound(packID, eventType string) (string, error) {
 // PacksDir returns the packs installation directory.
 func (m *Manager) PacksDir() string {
 	return m.packsDir
+}
+
+// Preview plays a preview sound from an available pack.
+func (m *Manager) Preview(packID string) error {
+	packs, err := m.ListAvailable()
+	if err != nil {
+		return err
+	}
+
+	var target Pack
+	for _, p := range packs {
+		if p.ID == packID || p.ID == "v"+packID {
+			target = p
+			break
+		}
+	}
+
+	if target.PreviewURL == "" {
+		return fmt.Errorf("pack %s has no preview sound", packID)
+	}
+
+	// Download preview to temp file
+	resp, err := m.httpClient.Get(target.PreviewURL)
+	if err != nil {
+		return fmt.Errorf("failed to download preview: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to download preview: HTTP %d", resp.StatusCode)
+	}
+
+	tmpFile, err := os.CreateTemp("", "ccbell-preview-*."+getAudioExtension(target.PreviewURL))
+	if err != nil {
+		return fmt.Errorf("failed to create temp file: %w", err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	if _, err := io.Copy(tmpFile, resp.Body); err != nil {
+		tmpFile.Close()
+		return fmt.Errorf("failed to save preview: %w", err)
+	}
+	tmpFile.Close()
+
+	// Play the preview
+	return playAudio(tmpFile.Name())
+}
+
+// playAudio plays an audio file using the appropriate player for the platform.
+func playAudio(path string) error {
+	switch runtime.GOOS {
+	case "darwin":
+		return exec.Command("afplay", path).Start()
+	case "linux":
+		// Try different players
+		players := []string{"mpv", "ffplay", "paplay", "aplay"}
+		for _, player := range players {
+			if _, err := exec.LookPath(player); err == nil {
+				var cmd *exec.Cmd
+				switch player {
+				case "mpv":
+					cmd = exec.Command(player, "--really-quiet", path)
+				case "ffplay":
+					cmd = exec.Command(player, "-nodisp", "-autoexit", path)
+				default:
+					cmd = exec.Command(player, path)
+				}
+				return cmd.Start()
+			}
+		}
+		return fmt.Errorf("no audio player found (install mpv or ffmpeg)")
+	default:
+		return fmt.Errorf("unsupported platform: %s", runtime.GOOS)
+	}
+}
+
+// getAudioExtension returns the file extension from a URL.
+func getAudioExtension(url string) string {
+	ext := filepath.Ext(url)
+	if ext != "" {
+		return strings.TrimPrefix(ext, ".")
+	}
+	return "aiff"
 }
 
 // packNameRegex validates pack names.

@@ -214,7 +214,7 @@ func run() error {
 	log.Debug("All checks passed, proceeding to play sound")
 
 	// === Resolve sound path ===
-	player := audio.NewPlayer(pluginRoot)
+	player := audio.NewPlayerWithHome(pluginRoot, homeDir)
 	log.Debug("Detected platform: %s", player.Platform())
 
 	// === Ensure audio player is available ===

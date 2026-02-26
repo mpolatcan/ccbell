@@ -44,6 +44,7 @@ func TestPrintUsage(t *testing.T) {
 		"bundled:stop",
 		"custom:",
 		"bundled:subagent",
+		"pack:",
 	}
 
 	for _, expected := range expectedStrings {

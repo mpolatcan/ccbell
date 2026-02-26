@@ -25,10 +25,10 @@ var packageManagers = map[string]string{
 
 // Packages to install for each audio player.
 var playerPackages = map[string]string{
-	"mpv":     "mpv",
-	"ffplay":  "ffmpeg",
-	"paplay":  "pulseaudio-utils",
-	"aplay":   "alsa-utils",
+	"mpv":    "mpv",
+	"ffplay": "ffmpeg",
+	"paplay": "pulseaudio-utils",
+	"aplay":  "alsa-utils",
 }
 
 // Platform represents the detected operating system.
@@ -63,6 +63,9 @@ func getLinuxPlayerArgs(playerName, soundPath string, volume float64) []string {
 
 // bundledSoundNameRegex validates bundled sound names.
 var bundledSoundNameRegex = regexp.MustCompile(`^[a-z_]+$`)
+
+// packIDRegex validates pack IDs (alphanumeric, hyphens, underscores).
+var packIDRegex = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
 
 // Player handles audio playback.
 type Player struct {
@@ -180,7 +183,7 @@ func (p *Player) resolvePackSound(spec string) (string, error) {
 	soundFile := parts[1]
 
 	// Validate pack ID
-	if !bundledSoundNameRegex.MatchString(packID) {
+	if !packIDRegex.MatchString(packID) {
 		return "", fmt.Errorf("invalid pack ID: %s", packID)
 	}
 

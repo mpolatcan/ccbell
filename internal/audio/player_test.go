@@ -774,6 +774,153 @@ func TestPlayWithValidLinuxPlayer(t *testing.T) {
 	t.Logf("Play with valid file: err=%v", err)
 }
 
+func TestNewPlayerWithHome(t *testing.T) {
+	player := NewPlayerWithHome("/plugin/root", "/home/user")
+	if player.pluginRoot != "/plugin/root" {
+		t.Errorf("pluginRoot = %q, want %q", player.pluginRoot, "/plugin/root")
+	}
+	if player.homeDir != "/home/user" {
+		t.Errorf("homeDir = %q, want %q", player.homeDir, "/home/user")
+	}
+	if player.platform == "" {
+		t.Error("platform should not be empty")
+	}
+}
+
+func TestResolvePackSound(t *testing.T) {
+	// Create temp home directory with a pack
+	tempDir, err := os.MkdirTemp("", "ccbell-pack-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	packDir := filepath.Join(tempDir, ".claude", "ccbell", "packs", "retro-8bit")
+	if err := os.MkdirAll(packDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	soundFile := filepath.Join(packDir, "stop.aiff")
+	if err := os.WriteFile(soundFile, []byte("dummy"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name      string
+		soundSpec string
+		homeDir   string
+		wantPath  string
+		wantErr   bool
+	}{
+		{
+			name:      "valid pack sound",
+			soundSpec: "pack:retro-8bit:stop.aiff",
+			homeDir:   tempDir,
+			wantPath:  soundFile,
+			wantErr:   false,
+		},
+		{
+			name:      "pack ID with hyphens is valid",
+			soundSpec: "pack:my-pack:stop.aiff",
+			homeDir:   tempDir,
+			wantPath:  "",
+			wantErr:   true, // file doesn't exist but ID is valid
+		},
+		{
+			name:      "pack ID with digits is valid",
+			soundSpec: "pack:pack123:stop.aiff",
+			homeDir:   tempDir,
+			wantPath:  "",
+			wantErr:   true, // file doesn't exist but ID is valid
+		},
+		{
+			name:      "pack ID with uppercase is valid",
+			soundSpec: "pack:MyPack:stop.aiff",
+			homeDir:   tempDir,
+			wantPath:  "",
+			wantErr:   true, // file doesn't exist but ID is valid
+		},
+		{
+			name:      "invalid pack ID with special chars",
+			soundSpec: "pack:pack;rm:stop.aiff",
+			homeDir:   tempDir,
+			wantErr:   true,
+		},
+		{
+			name:      "invalid pack ID with slash",
+			soundSpec: "pack:../evil:stop.aiff",
+			homeDir:   tempDir,
+			wantErr:   true,
+		},
+		{
+			name:      "invalid pack ID with spaces",
+			soundSpec: "pack:my pack:stop.aiff",
+			homeDir:   tempDir,
+			wantErr:   true,
+		},
+		{
+			name:      "path traversal in sound file",
+			soundSpec: "pack:retro-8bit:../../etc/passwd",
+			homeDir:   tempDir,
+			wantErr:   true,
+		},
+		{
+			name:      "slash in sound file",
+			soundSpec: "pack:retro-8bit:sub/dir.aiff",
+			homeDir:   tempDir,
+			wantErr:   true,
+		},
+		{
+			name:      "missing home directory",
+			soundSpec: "pack:retro-8bit:stop.aiff",
+			homeDir:   "",
+			wantErr:   true,
+		},
+		{
+			name:      "missing pack sound file",
+			soundSpec: "pack:retro-8bit:nonexistent.aiff",
+			homeDir:   tempDir,
+			wantErr:   true,
+		},
+		{
+			name:      "missing colon separator",
+			soundSpec: "pack:retro-8bit",
+			homeDir:   tempDir,
+			wantErr:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			player := NewPlayerWithHome("", tt.homeDir)
+			got, err := player.ResolveSoundPath(tt.soundSpec, "stop")
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ResolveSoundPath(%q) error = %v, wantErr %v", tt.soundSpec, err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr && got != tt.wantPath {
+				t.Errorf("ResolveSoundPath(%q) = %q, want %q", tt.soundSpec, got, tt.wantPath)
+			}
+		})
+	}
+}
+
+func TestPackIDRegex(t *testing.T) {
+	valid := []string{"retro", "retro-8bit", "nature_v2", "MyPack", "Pack123", "a-b_c"}
+	for _, id := range valid {
+		if !packIDRegex.MatchString(id) {
+			t.Errorf("packIDRegex should match %q", id)
+		}
+	}
+
+	invalid := []string{"", "has space", "semi;colon", "../bad", "a/b", "dot.bad"}
+	for _, id := range invalid {
+		if packIDRegex.MatchString(id) {
+			t.Errorf("packIDRegex should not match %q", id)
+		}
+	}
+}
+
 func TestInstallAudioPlayerNoManager(t *testing.T) {
 	// Test with a mock that has no package manager
 	// by calling installAudioPlayer when findPackageManager returns empty

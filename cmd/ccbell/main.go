@@ -270,11 +270,12 @@ CONFIGURATION:
     Global config:  ~/.claude/ccbell.config.json
 
 SOUND FORMATS:
-    bundled:stop         Bundled with plugin
+    bundled:stop              Bundled with plugin
     bundled:permission_prompt
     bundled:idle_prompt
     bundled:subagent
-    custom:/path/to.mp3  Custom audio file
+    custom:/path/to.mp3       Custom audio file
+    pack:pack_id:sound_file   Sound from an installed pack
 
 ENVIRONMENT:
     CLAUDE_PLUGIN_ROOT   Plugin installation directory

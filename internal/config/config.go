@@ -8,18 +8,17 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"strings"
 )
 
 // Config represents the full ccbell configuration.
 type Config struct {
-	Enabled       bool                `json:"enabled"`
-	Debug         bool                `json:"debug"`
-	ActiveProfile string              `json:"activeProfile"`
-	ActivePack    string              `json:"activePack,omitempty"`
-	QuietHours    *QuietHours         `json:"quietHours,omitempty"`
-	Events        map[string]*Event   `json:"events,omitempty"`
-	Profiles      map[string]*Profile `json:"profiles,omitempty"`
+	Enabled       bool                   `json:"enabled"`
+	Debug         bool                   `json:"debug"`
+	ActiveProfile string                 `json:"activeProfile"`
+	ActivePack    string                 `json:"activePack,omitempty"`
+	QuietHours    *QuietHours            `json:"quietHours,omitempty"`
+	Events        map[string]*Event      `json:"events,omitempty"`
+	Profiles      map[string]*Profile    `json:"profiles,omitempty"`
 	Packs         map[string]*PackConfig `json:"packs,omitempty"`
 }
 
@@ -57,6 +56,18 @@ var ValidEvents = map[string]bool{
 	"permission_prompt": true,
 	"idle_prompt":       true,
 	"subagent":          true,
+	"notification":      true,
+	"pre_tool_use":      true,
+	"post_tool_use":     true,
+	"bash":              true,
+	"read":              true,
+	"write":             true,
+	"edit":              true,
+	"task":              true,
+	"error":             true,
+	"success":           true,
+	"warning":           true,
+	"progress":          true,
 }
 
 // timeFormatRegex validates HH:MM format.
@@ -244,14 +255,5 @@ func ValidateEventType(eventType string) error {
 		return fmt.Errorf("unknown event type: %s (valid: %v)", eventType, valid)
 	}
 
-	return nil
-}
-
-// ValidatePackID validates a pack identifier.
-func ValidatePackID(packID string) error {
-	packID = strings.TrimPrefix(packID, "v")
-	if !eventTypeRegex.MatchString(packID) {
-		return fmt.Errorf("invalid pack ID: %s", packID)
-	}
 	return nil
 }

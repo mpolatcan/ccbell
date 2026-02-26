@@ -18,11 +18,11 @@ import (
 
 const (
 	// PackIndexURL is the URL to fetch the pack index from.
-	PackIndexURL = "https://api.github.com/repos/mpolatcan/ccbell-soundpacks/releases"
+	PackIndexURL = "https://api.github.com/repos/mpolatcan/ccbell-sound-packs/releases"
 	// PackOwner is the GitHub owner for sound pack releases.
 	PackOwner = "mpolatcan"
 	// PackRepo is the repository name for sound packs.
-	PackRepo = "ccbell-soundpacks"
+	PackRepo = "ccbell-sound-packs"
 	// PacksDir is the directory name for installed packs.
 	PacksDir = "packs"
 	// FileMode is the permission mode for pack files.
@@ -40,6 +40,7 @@ type Pack struct {
 	PreviewURL  string            `json:"previewUrl,omitempty"`
 	DownloadURL string            `json:"downloadUrl"`
 	PublishedAt string            `json:"publishedAt"`
+	TagName     string            `json:"tagName,omitempty"`
 }
 
 // PackIndex represents the index of available sound packs.
@@ -140,6 +141,7 @@ func (m *Manager) ListAvailable() ([]Pack, error) {
 			Version:     strings.TrimPrefix(release.TagName, "v"),
 			PublishedAt: release.PublishedAt,
 			Events:      make(map[string]string),
+			TagName:     release.TagName,
 		}
 
 		// Find the pack.json asset
@@ -172,7 +174,7 @@ func (m *Manager) Install(packID string) error {
 		return fmt.Errorf("home directory not set")
 	}
 
-	// Fetch pack info
+	// Fetch pack info (includes asset URLs from GitHub releases)
 	packs, err := m.ListAvailable()
 	if err != nil {
 		return err
@@ -197,38 +199,124 @@ func (m *Manager) Install(packID string) error {
 	}
 
 	// Download pack.json
-	req, err := http.NewRequest("GET", targetPack.DownloadURL, nil)
+	packData, err := m.downloadFile(targetPack.DownloadURL)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to download pack.json: %w", err)
 	}
 
-	resp, err := m.httpClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to download pack: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to download pack: HTTP %d", resp.StatusCode)
-	}
-
-	// Save to pack directory
+	// Save pack.json
 	manifestPath := filepath.Join(packDir, "pack.json")
-	f, err := os.OpenFile(manifestPath, os.O_CREATE|os.O_WRONLY, FileMode)
+	if err := os.WriteFile(manifestPath, packData, FileMode); err != nil {
+		return fmt.Errorf("failed to save pack manifest: %w", err)
+	}
+
+	// Parse pack.json to get the events map (sound filenames)
+	var manifest PackManifest
+	if err := json.Unmarshal(packData, &manifest); err != nil {
+		return fmt.Errorf("failed to parse pack.json: %w", err)
+	}
+
+	// Fetch the release assets by tag to get download URLs for sound files
+	releaseAssets, err := m.fetchReleaseAssets(targetPack.TagName)
 	if err != nil {
-		return fmt.Errorf("failed to save pack manifest: %w", err)
-	}
-	defer f.Close()
-
-	if _, err := io.Copy(f, resp.Body); err != nil {
-		return fmt.Errorf("failed to save pack manifest: %w", err)
+		return fmt.Errorf("failed to fetch release assets: %w", err)
 	}
 
-	// Download sound files
+	// Build a map of asset name -> download URL
+	assetURLs := make(map[string]string)
+	for _, asset := range releaseAssets {
+		assetURLs[asset.Name] = asset.DownloadURL
+	}
+
+	// Download each sound file referenced in the manifest
+	for _, soundFile := range manifest.Events {
+		assetURL, ok := assetURLs[soundFile]
+		if !ok {
+			fmt.Printf("Warning: sound file '%s' not found in release assets, skipping\n", soundFile)
+			continue
+		}
+
+		soundData, err := m.downloadFile(assetURL)
+		if err != nil {
+			return fmt.Errorf("failed to download sound file %s: %w", soundFile, err)
+		}
+
+		soundPath := filepath.Join(packDir, soundFile)
+		if err := os.WriteFile(soundPath, soundData, FileMode); err != nil {
+			return fmt.Errorf("failed to save sound file %s: %w", soundFile, err)
+		}
+	}
+
 	packDirAbs, _ := filepath.Abs(packDir)
 	fmt.Printf("Pack '%s' installed to %s\n", targetPack.Name, packDirAbs)
 
 	return nil
+}
+
+// releaseAsset represents a single asset in a GitHub release.
+type releaseAsset struct {
+	Name        string
+	DownloadURL string
+}
+
+// fetchReleaseAssets fetches the asset list for a specific release by tag.
+func (m *Manager) fetchReleaseAssets(tagName string) ([]releaseAsset, error) {
+	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/tags/%s", PackOwner, PackRepo, tagName)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "application/vnd.github.v3+json")
+	req.Header.Set("User-Agent", "ccbell")
+
+	resp, err := m.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("failed to fetch release %s: %s", tagName, string(body))
+	}
+
+	var release struct {
+		Assets []struct {
+			Name               string `json:"name"`
+			BrowserDownloadURL string `json:"browser_download_url"`
+		} `json:"assets"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
+		return nil, err
+	}
+
+	assets := make([]releaseAsset, len(release.Assets))
+	for i, a := range release.Assets {
+		assets[i] = releaseAsset{Name: a.Name, DownloadURL: a.BrowserDownloadURL}
+	}
+	return assets, nil
+}
+
+// downloadFile downloads a file from a URL and returns its contents.
+func (m *Manager) downloadFile(url string) ([]byte, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := m.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
+	}
+
+	return io.ReadAll(resp.Body)
 }
 
 // Uninstall removes an installed pack.

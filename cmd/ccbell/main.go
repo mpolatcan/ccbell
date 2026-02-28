@@ -214,7 +214,7 @@ func run() error {
 	log.Debug("All checks passed, proceeding to play sound")
 
 	// === Resolve sound path ===
-	player := audio.NewPlayer(pluginRoot)
+	player := audio.NewPlayerWithHome(pluginRoot, homeDir)
 	log.Debug("Detected platform: %s", player.Platform())
 
 	// === Ensure audio player is available ===
@@ -270,14 +270,18 @@ CONFIGURATION:
     Global config:  ~/.claude/ccbell.config.json
 
 SOUND FORMATS:
-    bundled:stop         Bundled with plugin
+    bundled:stop              Bundled with plugin
     bundled:permission_prompt
     bundled:idle_prompt
     bundled:subagent
-    custom:/path/to.mp3  Custom audio file
+    custom:/path/to.mp3       Custom audio file
+    pack:pack_id:sound_file   Sound from an installed pack
 
 ENVIRONMENT:
     CLAUDE_PLUGIN_ROOT   Plugin installation directory
+    CCBELL_CONFIG        Override config file path
+    CCBELL_LOG           Override log file path
+    CCBELL_PACKS_DIR     Override packs directory path
 
 For more information, visit: https://github.com/mpolatcan/ccbell`)
 }

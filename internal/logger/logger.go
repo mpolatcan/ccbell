@@ -27,9 +27,11 @@ type Logger struct {
 }
 
 // New creates a new Logger instance.
+// Checks CCBELL_LOG env var first (used by nightly variant for isolation),
+// falling back to ~/.claude/ccbell.log.
 func New(enabled bool, homeDir string) *Logger {
-	logPath := ""
-	if homeDir != "" {
+	logPath := os.Getenv("CCBELL_LOG")
+	if logPath == "" && homeDir != "" {
 		logPath = filepath.Join(homeDir, ".claude", "ccbell.log")
 	}
 

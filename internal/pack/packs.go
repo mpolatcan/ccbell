@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -49,6 +48,13 @@ type PackIndex struct {
 	UpdatedAt string `json:"updatedAt"`
 }
 
+// PackSource represents generation metadata for AI-generated packs.
+type PackSource struct {
+	Provider string `json:"provider,omitempty"`
+	Model    string `json:"model,omitempty"`
+	License  string `json:"license,omitempty"`
+}
+
 // PackManifest represents the manifest inside a pack archive.
 type PackManifest struct {
 	ID          string            `json:"id"`
@@ -56,7 +62,9 @@ type PackManifest struct {
 	Description string            `json:"description"`
 	Author      string            `json:"author"`
 	Version     string            `json:"version"`
-	Events      map[string]string `json:"events"` // event_type -> sound_filename
+	Events      map[string]string `json:"events"`             // event_type -> sound_filename
+	Prompts     map[string]string `json:"prompts,omitempty"`  // event_type -> generation prompt
+	Source      *PackSource       `json:"source,omitempty"`   // generation metadata
 }
 
 // InstalledPack represents an installed pack in the local filesystem.
@@ -74,11 +82,17 @@ type Manager struct {
 }
 
 // NewManager creates a new pack manager.
+// It reads CCBELL_PACKS_DIR and CCBELL_CONFIG environment variables for path
+// overrides (used by the nightly variant for config isolation), falling back
+// to default paths under ~/.claude/ccbell/.
 func NewManager(homeDir string) *Manager {
-	packsDir := ""
-	configPath := ""
-	if homeDir != "" {
+	packsDir := os.Getenv("CCBELL_PACKS_DIR")
+	configPath := os.Getenv("CCBELL_CONFIG")
+
+	if packsDir == "" && homeDir != "" {
 		packsDir = filepath.Join(homeDir, ".claude", "ccbell", PacksDir)
+	}
+	if configPath == "" && homeDir != "" {
 		configPath = filepath.Join(homeDir, ".claude", "ccbell.config.json")
 	}
 
@@ -90,6 +104,22 @@ func NewManager(homeDir string) *Manager {
 			Timeout: 30 * time.Second,
 		},
 	}
+}
+
+// parseReleaseTag extracts pack ID and version from a release tag.
+// Supports the generator format "{pack_id}-v{version}" (e.g., "minimal-v1.0.0",
+// "retro-8bit-v2.1.0") by splitting on the last "-v" followed by a digit.
+// Falls back to using the whole tag as the ID with an empty version for
+// legacy tags (e.g., "retro-8bit").
+func parseReleaseTag(tag string) (packID, version string) {
+	// Find the last occurrence of "-v" followed by a digit
+	for i := len(tag) - 1; i >= 1; i-- {
+		if tag[i-1] == '-' && tag[i] == 'v' && i+1 < len(tag) && tag[i+1] >= '0' && tag[i+1] <= '9' {
+			return tag[:i-1], tag[i+1:]
+		}
+	}
+	// Legacy format: whole tag is the ID
+	return strings.TrimPrefix(tag, "v"), ""
 }
 
 // ListAvailable fetches and returns available packs from GitHub releases.
@@ -134,11 +164,13 @@ func (m *Manager) ListAvailable() ([]Pack, error) {
 
 	var packs []Pack
 	for _, release := range releases {
+		packID, packVersion := parseReleaseTag(release.TagName)
+
 		pack := Pack{
-			ID:          release.TagName,
+			ID:          packID,
 			Name:        release.Name,
 			Description: release.Body,
-			Version:     strings.TrimPrefix(release.TagName, "v"),
+			Version:     packVersion,
 			PublishedAt: release.PublishedAt,
 			Events:      make(map[string]string),
 			TagName:     release.TagName,
@@ -182,7 +214,7 @@ func (m *Manager) Install(packID string) error {
 
 	var targetPack Pack
 	for _, p := range packs {
-		if p.ID == packID || p.ID == "v"+packID {
+		if p.ID == packID {
 			targetPack = p
 			break
 		}
@@ -402,14 +434,14 @@ func (m *Manager) UsePack(packID string) error {
 
 	var target InstalledPack
 	for _, p := range installed {
-		if p.Manifest.ID == packID || p.Manifest.ID == "v"+packID {
+		if p.Manifest.ID == packID {
 			target = p
 			break
 		}
 	}
 
 	if target.Manifest.ID == "" {
-		return fmt.Errorf("pack not installed: %s (use /ccbell:packs install %s first)", packID, packID)
+		return fmt.Errorf("pack not installed: %s (install it first with packs install)", packID)
 	}
 
 	// Update config file with pack sounds
@@ -474,7 +506,7 @@ func (m *Manager) GetPackSound(packID, eventType string) (string, error) {
 	}
 
 	for _, p := range installed {
-		if p.Manifest.ID == packID || p.Manifest.ID == "v"+packID {
+		if p.Manifest.ID == packID {
 			soundFile, ok := p.Manifest.Events[eventType]
 			if !ok {
 				return "", fmt.Errorf("event %s not found in pack %s", eventType, packID)
@@ -500,7 +532,7 @@ func (m *Manager) Preview(packID string) error {
 
 	var target Pack
 	for _, p := range packs {
-		if p.ID == packID || p.ID == "v"+packID {
+		if p.ID == packID {
 			target = p
 			break
 		}
@@ -574,14 +606,3 @@ func getAudioExtension(url string) string {
 	return "aiff"
 }
 
-// packNameRegex validates pack names.
-var packNameRegex = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
-
-// ValidatePackID validates a pack identifier.
-func ValidatePackID(packID string) error {
-	packID = strings.TrimPrefix(packID, "v")
-	if !packNameRegex.MatchString(packID) {
-		return fmt.Errorf("invalid pack ID: %s (must be alphanumeric with hyphens/underscores)", packID)
-	}
-	return nil
-}

@@ -52,22 +52,26 @@ type PackConfig struct {
 
 // ValidEvents is the whitelist of allowed event types.
 var ValidEvents = map[string]bool{
-	"stop":              true,
-	"permission_prompt": true,
-	"idle_prompt":       true,
-	"subagent":          true,
-	"notification":      true,
-	"pre_tool_use":      true,
-	"post_tool_use":     true,
-	"bash":              true,
-	"read":              true,
-	"write":             true,
-	"edit":              true,
-	"task":              true,
-	"error":             true,
-	"success":           true,
-	"warning":           true,
-	"progress":          true,
+	"stop":                true,
+	"permission_prompt":   true,
+	"idle_prompt":         true,
+	"subagent":            true,
+	"notification":        true,
+	"session_start":       true,
+	"session_end":         true,
+	"pre_tool_use":        true,
+	"post_tool_use":       true,
+	"subagent_start":      true,
+	"user_prompt_submit":  true,
+	"bash":                true,
+	"read":                true,
+	"write":               true,
+	"edit":                true,
+	"task":                true,
+	"error":               true,
+	"success":             true,
+	"warning":             true,
+	"progress":            true,
 }
 
 // timeFormatRegex validates HH:MM format.
@@ -96,34 +100,49 @@ func Default() *Config {
 	}
 }
 
+// configFilePath returns the config file path, checking CCBELL_CONFIG env var
+// first (used by nightly variant for isolation), falling back to the default
+// path under homeDir.
+func configFilePath(homeDir string) string {
+	if envPath := os.Getenv("CCBELL_CONFIG"); envPath != "" {
+		return envPath
+	}
+	if homeDir != "" {
+		return filepath.Join(homeDir, ".claude", "ccbell.config.json")
+	}
+	return ""
+}
+
 // Load reads configuration from file, falling back to defaults.
-// It only checks the global config at ~/.claude/ccbell.config.json.
+// Checks CCBELL_CONFIG env var first, then ~/.claude/ccbell.config.json.
 func Load(homeDir string) (*Config, string, error) {
 	cfg := Default()
-	configPath := ""
+	filePath := configFilePath(homeDir)
+	loadedPath := ""
 
-	// Load global config
-	if homeDir != "" {
-		globalConfig := filepath.Join(homeDir, ".claude", "ccbell.config.json")
-		if data, err := os.ReadFile(globalConfig); err == nil {
+	if filePath != "" {
+		if data, err := os.ReadFile(filePath); err == nil {
 			if err := json.Unmarshal(data, cfg); err != nil {
-				return nil, "", fmt.Errorf("invalid JSON in %s: %w", globalConfig, err)
+				return nil, "", fmt.Errorf("invalid JSON in %s: %w", filePath, err)
 			}
-			configPath = globalConfig
+			loadedPath = filePath
 		}
 	}
 
 	// Validate after loading
 	if err := cfg.Validate(); err != nil {
-		return nil, configPath, fmt.Errorf("config validation failed: %w", err)
+		return nil, loadedPath, fmt.Errorf("config validation failed: %w", err)
 	}
 
-	return cfg, configPath, nil
+	return cfg, loadedPath, nil
 }
 
 // EnsureConfig creates default config file if it doesn't exist.
 func EnsureConfig(homeDir string) error {
-	configPath := filepath.Join(homeDir, ".claude", "ccbell.config.json")
+	configPath := configFilePath(homeDir)
+	if configPath == "" {
+		return fmt.Errorf("no config path available")
+	}
 	if _, err := os.Stat(configPath); err == nil {
 		return nil // Already exists
 	}

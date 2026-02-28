@@ -197,8 +197,12 @@ func (p *Player) resolvePackSound(spec string) (string, error) {
 		return "", fmt.Errorf("home directory not set for pack sounds")
 	}
 
-	// Resolve pack directory
-	packDir := filepath.Join(p.homeDir, ".claude", "ccbell", "packs", packID)
+	// Resolve pack directory (CCBELL_PACKS_DIR env var for nightly isolation)
+	packsDir := os.Getenv("CCBELL_PACKS_DIR")
+	if packsDir == "" {
+		packsDir = filepath.Join(p.homeDir, ".claude", "ccbell", "packs")
+	}
+	packDir := filepath.Join(packsDir, packID)
 	path := filepath.Join(packDir, soundFile)
 
 	// Check file exists

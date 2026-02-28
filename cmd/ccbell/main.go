@@ -279,6 +279,9 @@ SOUND FORMATS:
 
 ENVIRONMENT:
     CLAUDE_PLUGIN_ROOT   Plugin installation directory
+    CCBELL_CONFIG        Override config file path
+    CCBELL_LOG           Override log file path
+    CCBELL_PACKS_DIR     Override packs directory path
 
 For more information, visit: https://github.com/mpolatcan/ccbell`)
 }

@@ -11,7 +11,11 @@ import (
 )
 
 func TestNewManager(t *testing.T) {
-	t.Run("with home dir", func(t *testing.T) {
+	t.Run("with home dir defaults", func(t *testing.T) {
+		// Clear env vars to test defaults
+		t.Setenv("CCBELL_PACKS_DIR", "")
+		t.Setenv("CCBELL_CONFIG", "")
+
 		m := NewManager("/home/user")
 		if m.homeDir != "/home/user" {
 			t.Errorf("homeDir = %q, want %q", m.homeDir, "/home/user")
@@ -30,6 +34,9 @@ func TestNewManager(t *testing.T) {
 	})
 
 	t.Run("with empty home dir", func(t *testing.T) {
+		t.Setenv("CCBELL_PACKS_DIR", "")
+		t.Setenv("CCBELL_CONFIG", "")
+
 		m := NewManager("")
 		if m.packsDir != "" {
 			t.Errorf("packsDir should be empty, got %q", m.packsDir)
@@ -38,41 +45,54 @@ func TestNewManager(t *testing.T) {
 			t.Errorf("configPath should be empty, got %q", m.configPath)
 		}
 	})
+
+	t.Run("with env var overrides", func(t *testing.T) {
+		t.Setenv("CCBELL_PACKS_DIR", "/custom/packs")
+		t.Setenv("CCBELL_CONFIG", "/custom/config.json")
+
+		m := NewManager("/home/user")
+		if m.packsDir != "/custom/packs" {
+			t.Errorf("packsDir = %q, want %q", m.packsDir, "/custom/packs")
+		}
+		if m.configPath != "/custom/config.json" {
+			t.Errorf("configPath = %q, want %q", m.configPath, "/custom/config.json")
+		}
+	})
 }
 
-func TestValidatePackID(t *testing.T) {
-	valid := []string{"retro-8bit", "nature_v2", "simple", "Pack123", "my-pack_v1"}
-	for _, id := range valid {
-		t.Run("valid_"+id, func(t *testing.T) {
-			if err := ValidatePackID(id); err != nil {
-				t.Errorf("ValidatePackID(%q) returned error: %v", id, err)
+func TestParseReleaseTag(t *testing.T) {
+	tests := []struct {
+		tag         string
+		wantID      string
+		wantVersion string
+	}{
+		{"minimal-v1.0.0", "minimal", "1.0.0"},
+		{"retro-8bit-v2.1.0", "retro-8bit", "2.1.0"},
+		{"sci-fi-ambient-v0.3.0", "sci-fi-ambient", "0.3.0"},
+		{"nature-v1.0.0-nightly.1", "nature", "1.0.0-nightly.1"},
+		// Legacy format (no version suffix)
+		{"retro-8bit", "retro-8bit", ""},
+		{"minimal", "minimal", ""},
+		{"vretro", "retro", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.tag, func(t *testing.T) {
+			gotID, gotVersion := parseReleaseTag(tt.tag)
+			if gotID != tt.wantID {
+				t.Errorf("parseReleaseTag(%q) ID = %q, want %q", tt.tag, gotID, tt.wantID)
+			}
+			if gotVersion != tt.wantVersion {
+				t.Errorf("parseReleaseTag(%q) Version = %q, want %q", tt.tag, gotVersion, tt.wantVersion)
 			}
 		})
 	}
-
-	t.Run("valid with v prefix", func(t *testing.T) {
-		if err := ValidatePackID("vretro-pack"); err != nil {
-			t.Errorf("ValidatePackID(vretro-pack) returned error: %v", err)
-		}
-	})
-
-	t.Run("invalid with dots", func(t *testing.T) {
-		if err := ValidatePackID("v1.0.0"); err == nil {
-			t.Error("ValidatePackID(v1.0.0) should return error (dots not allowed)")
-		}
-	})
-
-	invalid := []string{"pack with spaces", "pack/traversal", "pack..bad", "pack;inject", ""}
-	for _, id := range invalid {
-		t.Run("invalid_"+id, func(t *testing.T) {
-			if err := ValidatePackID(id); err == nil {
-				t.Errorf("ValidatePackID(%q) should return error", id)
-			}
-		})
-	}
 }
+
 
 func TestPacksDir(t *testing.T) {
+	t.Setenv("CCBELL_PACKS_DIR", "")
+	t.Setenv("CCBELL_CONFIG", "")
+
 	m := NewManager("/home/user")
 	want := filepath.Join("/home/user", ".claude", "ccbell", "packs")
 	if got := m.PacksDir(); got != want {
@@ -126,6 +146,8 @@ func createTestPack(t *testing.T, packsDir, packID string, manifest PackManifest
 
 func TestListInstalled(t *testing.T) {
 	t.Run("nonexistent dir returns empty", func(t *testing.T) {
+		t.Setenv("CCBELL_PACKS_DIR", "")
+		t.Setenv("CCBELL_CONFIG", "")
 		m := NewManager("/nonexistent/home")
 		installed, err := m.ListInstalled()
 		if err != nil {
@@ -137,6 +159,9 @@ func TestListInstalled(t *testing.T) {
 	})
 
 	t.Run("empty dir returns empty", func(t *testing.T) {
+		t.Setenv("CCBELL_PACKS_DIR", "")
+		t.Setenv("CCBELL_CONFIG", "")
+
 		tmpDir := t.TempDir()
 		packsDir := filepath.Join(tmpDir, ".claude", "ccbell", "packs")
 		if err := os.MkdirAll(packsDir, 0755); err != nil {
@@ -153,6 +178,9 @@ func TestListInstalled(t *testing.T) {
 	})
 
 	t.Run("valid packs", func(t *testing.T) {
+		t.Setenv("CCBELL_PACKS_DIR", "")
+		t.Setenv("CCBELL_CONFIG", "")
+
 		tmpDir := t.TempDir()
 		packsDir := filepath.Join(tmpDir, ".claude", "ccbell", "packs")
 
@@ -180,6 +208,9 @@ func TestListInstalled(t *testing.T) {
 	})
 
 	t.Run("skips invalid manifests", func(t *testing.T) {
+		t.Setenv("CCBELL_PACKS_DIR", "")
+		t.Setenv("CCBELL_CONFIG", "")
+
 		tmpDir := t.TempDir()
 		packsDir := filepath.Join(tmpDir, ".claude", "ccbell", "packs")
 
@@ -215,6 +246,9 @@ func TestListInstalled(t *testing.T) {
 	})
 
 	t.Run("empty home dir returns error", func(t *testing.T) {
+		t.Setenv("CCBELL_PACKS_DIR", "")
+		t.Setenv("CCBELL_CONFIG", "")
+
 		m := NewManager("")
 		_, err := m.ListInstalled()
 		if err == nil {
@@ -225,6 +259,8 @@ func TestListInstalled(t *testing.T) {
 
 func TestGetPackPath(t *testing.T) {
 	t.Run("valid path", func(t *testing.T) {
+		t.Setenv("CCBELL_PACKS_DIR", "")
+		t.Setenv("CCBELL_CONFIG", "")
 		tmpDir := t.TempDir()
 		packsDir := filepath.Join(tmpDir, ".claude", "ccbell", "packs")
 		createTestPack(t, packsDir, "retro", PackManifest{
@@ -244,6 +280,8 @@ func TestGetPackPath(t *testing.T) {
 	})
 
 	t.Run("missing file", func(t *testing.T) {
+		t.Setenv("CCBELL_PACKS_DIR", "")
+		t.Setenv("CCBELL_CONFIG", "")
 		tmpDir := t.TempDir()
 		packsDir := filepath.Join(tmpDir, ".claude", "ccbell", "packs")
 		if err := os.MkdirAll(filepath.Join(packsDir, "retro"), 0755); err != nil {
@@ -258,6 +296,8 @@ func TestGetPackPath(t *testing.T) {
 	})
 
 	t.Run("empty home dir", func(t *testing.T) {
+		t.Setenv("CCBELL_PACKS_DIR", "")
+		t.Setenv("CCBELL_CONFIG", "")
 		m := NewManager("")
 		_, err := m.GetPackPath("retro", "stop.aiff")
 		if err == nil {
@@ -268,6 +308,8 @@ func TestGetPackPath(t *testing.T) {
 
 func TestUninstall(t *testing.T) {
 	t.Run("valid pack", func(t *testing.T) {
+		t.Setenv("CCBELL_PACKS_DIR", "")
+		t.Setenv("CCBELL_CONFIG", "")
 		tmpDir := t.TempDir()
 		packsDir := filepath.Join(tmpDir, ".claude", "ccbell", "packs")
 		createTestPack(t, packsDir, "retro", PackManifest{
@@ -287,6 +329,8 @@ func TestUninstall(t *testing.T) {
 	})
 
 	t.Run("missing pack", func(t *testing.T) {
+		t.Setenv("CCBELL_PACKS_DIR", "")
+		t.Setenv("CCBELL_CONFIG", "")
 		tmpDir := t.TempDir()
 		packsDir := filepath.Join(tmpDir, ".claude", "ccbell", "packs")
 		if err := os.MkdirAll(packsDir, 0755); err != nil {
@@ -301,6 +345,8 @@ func TestUninstall(t *testing.T) {
 	})
 
 	t.Run("empty home dir", func(t *testing.T) {
+		t.Setenv("CCBELL_PACKS_DIR", "")
+		t.Setenv("CCBELL_CONFIG", "")
 		m := NewManager("")
 		err := m.Uninstall("retro")
 		if err == nil {
@@ -311,6 +357,8 @@ func TestUninstall(t *testing.T) {
 
 func TestUsePack(t *testing.T) {
 	t.Run("valid pack", func(t *testing.T) {
+		t.Setenv("CCBELL_PACKS_DIR", "")
+		t.Setenv("CCBELL_CONFIG", "")
 		tmpDir := t.TempDir()
 		packsDir := filepath.Join(tmpDir, ".claude", "ccbell", "packs")
 		createTestPack(t, packsDir, "retro", PackManifest{
@@ -351,6 +399,8 @@ func TestUsePack(t *testing.T) {
 	})
 
 	t.Run("missing pack", func(t *testing.T) {
+		t.Setenv("CCBELL_PACKS_DIR", "")
+		t.Setenv("CCBELL_CONFIG", "")
 		tmpDir := t.TempDir()
 		packsDir := filepath.Join(tmpDir, ".claude", "ccbell", "packs")
 		if err := os.MkdirAll(packsDir, 0755); err != nil {
@@ -364,26 +414,36 @@ func TestUsePack(t *testing.T) {
 		}
 	})
 
-	t.Run("with v prefix match", func(t *testing.T) {
+	t.Run("exact ID match only", func(t *testing.T) {
+		t.Setenv("CCBELL_PACKS_DIR", "")
+		t.Setenv("CCBELL_CONFIG", "")
+
 		tmpDir := t.TempDir()
 		packsDir := filepath.Join(tmpDir, ".claude", "ccbell", "packs")
 		createTestPack(t, packsDir, "retro", PackManifest{
-			ID:     "vretro",
+			ID:     "retro",
 			Name:   "Retro Pack",
 			Events: map[string]string{"stop": "stop.aiff"},
 		})
 
 		m := NewManager(tmpDir)
-		// Should match because pack.Manifest.ID "vretro" == "v" + "retro"
 		err := m.UsePack("retro")
 		if err != nil {
-			t.Errorf("UsePack() with v-prefix match should not error: %v", err)
+			t.Errorf("UsePack() with exact match should not error: %v", err)
+		}
+
+		// Mismatched ID should fail
+		err = m.UsePack("vretro")
+		if err == nil {
+			t.Error("UsePack() with mismatched ID should return error")
 		}
 	})
 }
 
 func TestUpdateConfigWithPack(t *testing.T) {
 	t.Run("creates new config", func(t *testing.T) {
+		t.Setenv("CCBELL_PACKS_DIR", "")
+		t.Setenv("CCBELL_CONFIG", "")
 		tmpDir := t.TempDir()
 		configDir := filepath.Join(tmpDir, ".claude")
 		if err := os.MkdirAll(configDir, 0755); err != nil {
@@ -417,6 +477,8 @@ func TestUpdateConfigWithPack(t *testing.T) {
 	})
 
 	t.Run("updates existing config", func(t *testing.T) {
+		t.Setenv("CCBELL_PACKS_DIR", "")
+		t.Setenv("CCBELL_CONFIG", "")
 		tmpDir := t.TempDir()
 		configDir := filepath.Join(tmpDir, ".claude")
 		if err := os.MkdirAll(configDir, 0755); err != nil {
@@ -485,6 +547,8 @@ func TestUpdateConfigWithPack(t *testing.T) {
 
 func TestGetPackSound(t *testing.T) {
 	t.Run("valid event", func(t *testing.T) {
+		t.Setenv("CCBELL_PACKS_DIR", "")
+		t.Setenv("CCBELL_CONFIG", "")
 		tmpDir := t.TempDir()
 		packsDir := filepath.Join(tmpDir, ".claude", "ccbell", "packs")
 		createTestPack(t, packsDir, "retro", PackManifest{
@@ -504,6 +568,8 @@ func TestGetPackSound(t *testing.T) {
 	})
 
 	t.Run("missing event", func(t *testing.T) {
+		t.Setenv("CCBELL_PACKS_DIR", "")
+		t.Setenv("CCBELL_CONFIG", "")
 		tmpDir := t.TempDir()
 		packsDir := filepath.Join(tmpDir, ".claude", "ccbell", "packs")
 		createTestPack(t, packsDir, "retro", PackManifest{
@@ -519,6 +585,8 @@ func TestGetPackSound(t *testing.T) {
 	})
 
 	t.Run("missing pack", func(t *testing.T) {
+		t.Setenv("CCBELL_PACKS_DIR", "")
+		t.Setenv("CCBELL_CONFIG", "")
 		tmpDir := t.TempDir()
 		packsDir := filepath.Join(tmpDir, ".claude", "ccbell", "packs")
 		if err := os.MkdirAll(packsDir, 0755); err != nil {
@@ -535,6 +603,8 @@ func TestGetPackSound(t *testing.T) {
 
 func TestListAvailable(t *testing.T) {
 	t.Run("successful response", func(t *testing.T) {
+		t.Setenv("CCBELL_PACKS_DIR", "")
+		t.Setenv("CCBELL_CONFIG", "")
 		releases := []map[string]interface{}{
 			{
 				"tag_name":     "retro-8bit",
@@ -679,75 +749,13 @@ func TestListAvailable(t *testing.T) {
 
 func TestInstall(t *testing.T) {
 	t.Run("empty home dir", func(t *testing.T) {
+		t.Setenv("CCBELL_PACKS_DIR", "")
+		t.Setenv("CCBELL_CONFIG", "")
 		m := NewManager("")
 		err := m.Install("retro")
 		if err == nil {
 			t.Error("Install() with empty home should return error")
 		}
-	})
-
-	t.Run("successful install", func(t *testing.T) {
-		manifest := PackManifest{
-			ID:      "retro",
-			Name:    "Retro Pack",
-			Version: "1.0.0",
-			Events:  map[string]string{"stop": "stop.aiff"},
-		}
-		manifestData, _ := json.Marshal(manifest)
-
-		// Create release list server
-		releaseServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.URL.Path == "/" {
-				releases := []map[string]interface{}{
-					{
-						"tag_name":     "retro",
-						"name":         "Retro Pack",
-						"body":         "Retro sounds",
-						"published_at": "2025-01-01T00:00:00Z",
-						"assets": []map[string]interface{}{
-							{
-								"name":                 "pack.json",
-								"browser_download_url": "", // Will be patched below
-							},
-						},
-					},
-				}
-				json.NewEncoder(w).Encode(releases)
-			} else if r.URL.Path == "/pack.json" {
-				w.Write(manifestData)
-			}
-		}))
-		defer releaseServer.Close()
-
-		// Re-create server with correct download URL
-		releaseServer.Close()
-		releaseServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			switch r.URL.Path {
-			case "/releases":
-				releases := []map[string]interface{}{
-					{
-						"tag_name":     "retro",
-						"name":         "Retro Pack",
-						"body":         "Retro sounds",
-						"published_at": "2025-01-01T00:00:00Z",
-						"assets": []map[string]interface{}{
-							{
-								"name":                 "pack.json",
-								"browser_download_url": releaseServer.URL + "/download/pack.json",
-							},
-						},
-					},
-				}
-				json.NewEncoder(w).Encode(releases)
-			case "/download/pack.json":
-				w.Write(manifestData)
-			default:
-				w.WriteHeader(404)
-			}
-		}))
-		// Note: self-referencing URL issue with httptest, so we test Install separately
-		// The main logic flow is tested implicitly; direct HTTP testing is above.
-		_ = releaseServer
 	})
 
 	t.Run("pack not found", func(t *testing.T) {
@@ -793,18 +801,3 @@ func TestPreview(t *testing.T) {
 	})
 }
 
-func TestPackNameRegex(t *testing.T) {
-	valid := []string{"retro", "retro-8bit", "nature_v2", "LOUD", "Pack123", "a", "a-b_c"}
-	for _, name := range valid {
-		if !packNameRegex.MatchString(name) {
-			t.Errorf("packNameRegex should match %q", name)
-		}
-	}
-
-	invalid := []string{"", "has space", "slash/bad", "semi;colon", "dot.bad", "a@b"}
-	for _, name := range invalid {
-		if packNameRegex.MatchString(name) {
-			t.Errorf("packNameRegex should not match %q", name)
-		}
-	}
-}

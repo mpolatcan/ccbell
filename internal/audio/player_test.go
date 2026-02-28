@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 )
 
@@ -555,7 +556,7 @@ func TestPlayLinuxNoPlayer(t *testing.T) {
 			return
 		}
 		expectedMsg := "no audio player found"
-		if !contains(err.Error(), expectedMsg) {
+		if !strings.Contains(err.Error(), expectedMsg) {
 			t.Errorf("error message should contain %q, got %q", expectedMsg, err.Error())
 		}
 	}
@@ -640,25 +641,11 @@ func TestPackageManagersMapping(t *testing.T) {
 			t.Errorf("packageManagers[%q] should not be empty", pm)
 		}
 		// Check for common package manager keywords
-		hasInstall := contains(cmd, "install") || contains(cmd, "add") || contains(cmd, "sync") || contains(cmd, "ask") || contains(cmd, " -S ")
+		hasInstall := strings.Contains(cmd, "install") || strings.Contains(cmd, "add") || strings.Contains(cmd, "sync") || strings.Contains(cmd, "ask") || strings.Contains(cmd, " -S ")
 		if !hasInstall {
 			t.Errorf("packageManagers[%q] should contain install/add/sync/ask command: %q", pm, cmd)
 		}
 	}
-}
-
-// Helper function.
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsHelper(s, substr))
-}
-
-func containsHelper(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
 
 func TestPlayLinuxWithPlayer(t *testing.T) {
